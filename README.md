@@ -1,4 +1,4 @@
-# study_share
+# example
 
 A new Flutter project.
 

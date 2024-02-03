@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189358538674",
+    "project_id": "study-share-a4c55",
+    "storage_bucket": "study-share-a4c55.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189358538674:android:893ddb14fd9d78ce6a6eab",
+        "android_client_info": {
+          "package_name": "com.azlirin.studyshare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCD3KHwtIEpAQ4rRsaJBSQtNpkxL1hMspo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
