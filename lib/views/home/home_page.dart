@@ -43,8 +43,8 @@ class _HomePageState extends State<HomePage> {
             label: "Kalender",
           ),
           NavigationDestination(
-            icon: Icon(Icons.folder),
-            label: "Berkas",
+            icon: Icon(Icons.class_),
+            label: "Kelas",
           ),
           NavigationDestination(
             icon: Icon(Icons.account_circle_rounded),

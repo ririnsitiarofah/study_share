@@ -174,15 +174,26 @@ class _JoinPageState extends State<JoinPage> {
                                 'user',
                               );
 
-                              room.users.add(
-                                types.User(
-                                  id: user.uid,
-                                  firstName: user.displayName!,
-                                  role: types.Role.user,
-                                ),
+                              final metadata = room.metadata ?? {};
+                              final updatedRoom = room.copyWith(
+                                metadata: {
+                                  ...metadata,
+                                  'users': {
+                                    ...metadata['users'] ?? {},
+                                    user.uid: user.displayName,
+                                  },
+                                },
+                                users: [
+                                  ...room.users,
+                                  types.User(
+                                    id: user.uid,
+                                    firstName: user.displayName!,
+                                    role: types.Role.user,
+                                  ),
+                                ],
                               );
 
-                              FirebaseChatCore.instance.updateRoom(room);
+                              FirebaseChatCore.instance.updateRoom(updatedRoom);
 
                               Navigator.pushAndRemoveUntil(
                                 context,
@@ -235,7 +246,7 @@ class _JoinPageState extends State<JoinPage> {
                               horizontal: 24,
                               vertical: 12,
                             ),
-                            textStyle: Theme.of(context).textTheme.headline6,
+                            textStyle: Theme.of(context).textTheme.titleLarge,
                           ).copyWith(
                             elevation: ButtonStyleButton.allOrNull(0),
                           ),

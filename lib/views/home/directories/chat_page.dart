@@ -22,6 +22,11 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  final _user = types.User(
+    id: FirebaseAuth.instance.currentUser!.uid,
+    firstName: FirebaseAuth.instance.currentUser!.displayName,
+  );
+  final _users = <types.User>[];
   types.Room? _room;
 
   void _handlePreviewDataFetched(
@@ -34,15 +39,31 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handleSendPressed(types.PartialText message) {
-    FirebaseChatCore.instance.sendMessage(
-      message,
-      _room!.id,
-    );
+    FirebaseChatCore.instance.sendMessage(message, _room!.id);
   }
 
   Future<void> _init() async {
     try {
       if (_room != null) return;
+      final usersSnapshot = await FirebaseFirestore.instance
+          .collection('member_kelas')
+          .where('id_kelas', isEqualTo: widget.idKelas)
+          .get();
+      _users
+        ..clear()
+        ..addAll(
+          usersSnapshot.docs.map(
+            (doc) => types.User(
+              id: doc.id,
+              firstName: doc['nama'],
+              role: switch (doc['role']) {
+                'pemilik' => types.Role.admin,
+                'admin' => types.Role.agent,
+                _ => types.Role.user,
+              },
+            ),
+          ),
+        );
 
       final roomsSnapshot = await FirebaseFirestore.instance
           .collection('room_chat')
@@ -70,6 +91,13 @@ class _ChatPageState extends State<ChatPage> {
         name: widget.namaKelas,
         metadata: {
           'id_kelas': widget.idKelas,
+          'users': docs.fold<Map<String, String>>(
+            {},
+            (prev, doc) => {
+              ...prev,
+              doc.id: doc['nama'],
+            },
+          ),
         },
         users: docs.map((doc) {
           final data = doc.data();
@@ -127,51 +155,66 @@ class _ChatPageState extends State<ChatPage> {
         return StreamBuilder<types.Room>(
           initialData: _room,
           stream: FirebaseChatCore.instance.room(_room!.id),
-          builder: (context, snapshot) {
+          builder: (context, roomSnapshot) {
             return StreamBuilder<List<types.Message>>(
               initialData: const [],
-              stream: FirebaseChatCore.instance.messages(snapshot.data!),
-              builder: (context, snapshot) {
+              stream: FirebaseChatCore.instance.messages(roomSnapshot.data!),
+              builder: (context, messageSnapshot) {
                 return Chat(
                   showUserNames: true,
-                  showUserAvatars: true,
-                  nameBuilder: (user) => Text(user.firstName ?? 'Gak da nama'),
+                  nameBuilder: (user) {
+                    return Text(
+                      roomSnapshot.data?.metadata?['users']?[user.id] ??
+                          'Pengguna StudyShare',
+                      style: textTheme.titleSmall?.copyWith(
+                        color: colorScheme.primary,
+                      ),
+                    );
+                  },
+                  emptyState:
+                      messageSnapshot.connectionState != ConnectionState.active
+                          ? const Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          : Center(
+                              child: Text(
+                                'Belum ada pesan',
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
                   theme: DefaultChatTheme(
                     backgroundColor: colorScheme.background,
                     inputElevation: 8,
+                    sentMessageBodyTextStyle: textTheme.bodyMedium!.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    receivedMessageBodyTextStyle:
+                        textTheme.bodyMedium!.copyWith(
+                      color: colorScheme.onSecondaryContainer,
+                    ),
                     inputBorderRadius:
                         const BorderRadius.all(Radius.circular(36)),
                     inputPadding: const EdgeInsets.fromLTRB(16, 12, 0, 12),
                     inputMargin: const EdgeInsets.all(8),
                     inputBackgroundColor: colorScheme.surface,
                     inputSurfaceTintColor: colorScheme.surfaceTint,
-                    primaryColor: colorScheme.primary,
-                    secondaryColor: colorScheme.secondary,
+                    primaryColor: colorScheme.primaryContainer,
+                    secondaryColor: colorScheme.secondaryContainer,
                     errorColor: colorScheme.error,
                     sendButtonIcon: const Icon(Icons.send),
                     sendButtonMargin: EdgeInsets.zero,
-                    messageInsetsVertical: 8,
+                    messageInsetsVertical: 6,
+                    messageInsetsHorizontal: 12,
                   ),
-                  emptyState: snapshot.connectionState == ConnectionState.active
-                      ? Center(
-                          child: Text(
-                            'Belum ada pesan. Mulai chat sekarang!',
-                            style: TextStyle(
-                              color: colorScheme.onBackground,
-                            ),
-                          ),
-                        )
-                      : const SizedBox(),
                   inputOptions: const InputOptions(
                     sendButtonVisibilityMode: SendButtonVisibilityMode.always,
                   ),
-                  messages: snapshot.data ?? [],
+                  messages: messageSnapshot.data ?? [],
                   onPreviewDataFetched: _handlePreviewDataFetched,
                   onSendPressed: _handleSendPressed,
-                  user: types.User(
-                    id: FirebaseAuth.instance.currentUser!.uid,
-                    firstName: FirebaseAuth.instance.currentUser!.displayName!,
-                  ),
+                  user: _user,
                 );
               },
             );

@@ -9,10 +9,14 @@ class DirectoriesWrapperPage extends StatefulWidget {
     super.key,
     required this.idKelas,
     required this.namaKelas,
+    required this.idDirektori,
+    required this.namaDirektori,
   });
 
   final String idKelas;
   final String namaKelas;
+  final String? idDirektori;
+  final String? namaDirektori;
 
   @override
   State<DirectoriesWrapperPage> createState() => _DirectoriesWrapperPageState();
@@ -42,7 +46,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
               height: kToolbarHeight,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(widget.namaKelas),
+                child: Text(widget.namaDirektori ?? widget.namaKelas),
               ),
             ),
           ),
@@ -69,7 +73,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
           },
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.folder),
               label: "Berkas",
             ),
             NavigationDestination(
@@ -82,14 +86,18 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
           0 => TabBarView(
               children: [
                 DirectoriesPage(
+                  isKelas: true,
                   idKelas: widget.idKelas,
-                  idDirektori: null,
-                  namaDirektori: null,
+                  namaKelas: widget.namaKelas,
+                  idDirektori: widget.idDirektori,
+                  namaDirektori: widget.namaDirektori,
                 ),
-                const DirectoriesPage(
-                  idKelas: null,
-                  idDirektori: null,
-                  namaDirektori: null,
+                DirectoriesPage(
+                  isKelas: false,
+                  idKelas: widget.idKelas,
+                  namaKelas: widget.namaKelas,
+                  idDirektori: widget.idDirektori,
+                  namaDirektori: widget.namaDirektori,
                 ),
               ],
             ),

@@ -1,20 +1,32 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/home/directories/add_folder_dialog.dart';
 import 'package:studyshare/views/home/directories/add_post_dialog.dart';
+import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
 
 class DirectoriesPage extends StatelessWidget {
   const DirectoriesPage({
     super.key,
+    required this.isKelas,
     required this.idKelas,
+    required this.namaKelas,
     required this.idDirektori,
     required this.namaDirektori,
   });
 
-  final String? idKelas;
+  final bool isKelas;
+  final String idKelas;
+  final String namaKelas;
   final String? idDirektori;
   final String? namaDirektori;
 
@@ -23,7 +35,7 @@ class DirectoriesPage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final folderQuery = idKelas != null
+    final folderQuery = isKelas
         ? FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'folder')
@@ -39,7 +51,7 @@ class DirectoriesPage extends StatelessWidget {
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
             .orderBy('nama');
 
-    final postQuery = idKelas != null
+    final postQuery = isKelas
         ? FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'postingan')
@@ -118,7 +130,7 @@ class DirectoriesPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Color(data['color'] ?? 0xffcd3676),
+                          backgroundColor: Color(data['warna'] ?? 0xffcd3676),
                           child: const Icon(Icons.folder),
                         ),
                         trailing: PopupMenuButton(
@@ -164,7 +176,17 @@ class DirectoriesPage extends StatelessWidget {
                         title: Text(data['nama']),
                         tileColor: colorScheme.surfaceVariant,
                         onTap: () {
-                          // Hande tile tap if needed
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DirectoriesWrapperPage(
+                                idKelas: idKelas,
+                                namaKelas: namaKelas,
+                                idDirektori: doc.id,
+                                namaDirektori: data['nama'],
+                              ),
+                            ),
+                          );
                         },
                       ),
                     );
@@ -248,17 +270,20 @@ class DirectoriesPage extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(data['deskripsi']),
                                   ],
-                                  Row(
+                                  const SizedBox(height: 8),
+                                  Wrap(
                                     children: [
-                                      IconButton(
-                                        style: IconButton.styleFrom(
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
+                                      for (final entry
+                                          in (data['lampiran'] as Map).entries)
+                                        ActionChip(
+                                          label: Text(entry.value['nama']),
+                                          onPressed: () => _handleLampiranTap(
+                                            context: context,
+                                            id: entry.key,
+                                            extension: entry.value['type'],
+                                            url: entry.value['url'],
+                                          ),
                                         ),
-                                        visualDensity: VisualDensity.compact,
-                                        onPressed: () {},
-                                        icon: const Icon(Icons.message),
-                                      ),
                                     ],
                                   )
                                 ],
@@ -293,6 +318,16 @@ class DirectoriesPage extends StatelessWidget {
                                   );
                                   break;
                                 case 'delete':
+                                  final storage = FirebaseStorage.instance;
+
+                                  final lampiran =
+                                      data['lampiran'] as Map<String, dynamic>;
+                                  for (final entry in lampiran.entries) {
+                                    await storage
+                                        .refFromURL(entry.value['url'])
+                                        .delete();
+                                  }
+
                                   await FirebaseFirestore.instance
                                       .collection('direktori')
                                       .doc(doc.id)
@@ -357,5 +392,38 @@ class DirectoriesPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleLampiranTap({
+    required BuildContext context,
+    required String id,
+    required String extension,
+    required String url,
+  }) async {
+    try {
+      final documentsDir = (await getApplicationDocumentsDirectory()).path;
+      final localPath = '$documentsDir/$id.$extension';
+
+      if (File(localPath).existsSync()) {
+        await OpenFilex.open(localPath);
+        return;
+      }
+
+      final client = http.Client();
+      final request = await client.get(Uri.parse(url));
+      final bytes = request.bodyBytes;
+
+      final file = File(localPath);
+      await file.writeAsBytes(bytes);
+
+      await OpenFilex.open(localPath);
+    } catch (e, stackTrace) {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Gagal mengunduh lampiran. Silakan coba lagi."),
+        ),
+      );
+    }
   }
 }

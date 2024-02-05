@@ -81,7 +81,7 @@ class ClassroomsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
               child: ListTile(
                 leading: const CircleAvatar(
-                  child: Icon(Icons.school),
+                  child: Icon(Icons.class_),
                 ),
                 // trailing: PopupMenuButton(
                 //   itemBuilder: (context) => [
@@ -109,6 +109,8 @@ class ClassroomsPage extends StatelessWidget {
                       builder: (context) => DirectoriesWrapperPage(
                         idKelas: memberKelas["id_kelas"],
                         namaKelas: memberKelas["nama_kelas"],
+                        idDirektori: null,
+                        namaDirektori: null,
                       ),
                     ),
                   );
