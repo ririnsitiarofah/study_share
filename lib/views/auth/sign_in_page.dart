@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -15,6 +17,9 @@ class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  var _showPassword = false;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -66,7 +71,7 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                       TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: !_showPassword,
                         autocorrect: false,
                         textInputAction: TextInputAction.go,
                         validator: FormBuilderValidators.compose(
@@ -81,9 +86,19 @@ class _SignInPageState extends State<SignInPage> {
                             ),
                           ],
                         ),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Password',
                           icon: Icon(Icons.lock_rounded),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _showPassword = !_showPassword;
+                              });
+                            },
+                            icon: Icon(_showPassword
+                                ? Icons.visibility_rounded
+                                : Icons.visibility_off_rounded),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -110,7 +125,9 @@ class _SignInPageState extends State<SignInPage> {
                                   builder: (context) => const HomePage(),
                                 ),
                               );
-                            } catch (error) {
+                            } catch (e, stackTrace) {
+                              log(e.toString(),
+                                  error: e, stackTrace: stackTrace);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content:

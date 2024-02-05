@@ -1,12 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:studyshare/views/home/account/account_page.dart';
 import 'package:studyshare/views/home/calendar/calendar_page.dart';
-import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
+import 'package:studyshare/views/home/directories/classrooms_page.dart';
 import 'package:studyshare/views/home/error_page.dart';
 import 'package:studyshare/views/home/overview/overview_pade.dart';
-import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -16,18 +18,22 @@ class _HomePageState extends State<HomePage> {
   var _selectedIndex = 0;
 
   @override
+  void initState() {
+    _selectedIndex = widget.initialIndex;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() {
-            print("nilai index sebelumnya: $_selectedIndex");
             _selectedIndex = index;
-            print("nilai index setelah diubah: $_selectedIndex");
           });
         },
-        destinations: [
+        destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home),
             label: "Beranda",
@@ -47,11 +53,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: switch (_selectedIndex) {
-        0 => OverviewPage(),
-        1 => CalendarPage(),
-        2 => DirectoriesWrapperPage(),
-        3 => AccountPage(),
-        _ => ErrorPage(),
+        0 => const OverviewPage(),
+        1 => const CalendarPage(),
+        2 => const ClassroomsPage(),
+        3 => const AccountPage(),
+        _ => const ErrorPage(),
       },
     );
   }

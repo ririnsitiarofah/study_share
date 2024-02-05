@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:studyshare/firebase_options.dart';
 import 'package:studyshare/views/splash/splash_page.dart';
 
@@ -8,6 +9,13 @@ Future<void> main() async {
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseChatCore.instance.setConfig(
+    const FirebaseChatCoreConfig(
+      null,
+      'room_chat',
+      'user',
+    ),
   );
   runApp(const MyApp());
 }

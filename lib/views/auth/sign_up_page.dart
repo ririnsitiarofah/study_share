@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -154,13 +157,20 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                           onPressed: () async {
                             try {
-                              await FirebaseAuth.instance
+                              final cred = await FirebaseAuth.instance
                                   .createUserWithEmailAndPassword(
                                       email: _emailController.text,
                                       password: _passwordController.text);
 
-                              await FirebaseAuth.instance.currentUser
-                                  ?.updateDisplayName(_nameController.text);
+                              await cred.user!
+                                  .updateDisplayName(_nameController.text);
+
+                              await FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                                  .set({
+                                'nama': _nameController.text,
+                              });
 
                               Navigator.pushReplacement(
                                 context,
@@ -168,7 +178,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                   builder: (context) => const HomePage(),
                                 ),
                               );
-                            } catch (error) {
+                            } catch (e, stackTrace) {
+                              log(e.toString(),
+                                  error: e, stackTrace: stackTrace);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text("Emailnya udah pernah dipake"),

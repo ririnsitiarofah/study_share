@@ -23,6 +23,11 @@ dependencies:
   mobile_scanner: ^4.0.0
   syncfusion_flutter_calendar: ^24.2.3
   cupertino_icons: ^1.0.2
+  shortid: ^0.1.2
+  firebase_storage: ^11.6.4
+  flutter_chat_ui: ^1.6.11
+  flutter_firebase_chat_core: ^1.6.7
+  flutter_chat_types: ^3.6.2
 
 dev_dependencies:
   flutter_test:

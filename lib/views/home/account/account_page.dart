@@ -10,19 +10,24 @@ class AccountPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+
+    final user = FirebaseAuth.instance.currentUser!;
+
     return Scaffold(
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar.large(
-              title: Text("Akun"),
+              title: const Text("Akun"),
               backgroundColor: colorScheme.background,
               actions: [
                 IconButton(
                   icon: const Icon(Icons.settings_rounded),
                   onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => SettingPage()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SettingPage()));
                   },
                 ),
               ],
@@ -38,81 +43,37 @@ class AccountPage extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Profil Kamu",
-                            style: textTheme.titleMedium,
-                          ),
-                          SizedBox(
-                            height: 8,
-                          ),
-                          Text(
-                            "Semua orang di kelas kamu bakal bisa melihat info ini.",
-                            style: textTheme.bodyMedium,
-                          ),
-                          Divider(
-                            height: 8,
-                          ),
-                          ListTile(
-                            title: Text("Nama"),
-                            subtitle: Text("Ririn Siti Arofah"),
-                            trailing: Icon(Icons.arrow_right),
-                            onTap: () {},
-                          ),
-                          ListTile(
-                            title: Text("Email"),
-                            subtitle: Text("ririnsitiarofah12@gmail.com"),
-                            trailing: Icon(Icons.arrow_right),
-                            onTap: () {},
-                          ),
-                          ListTile(
-                            title: const Text('Password'),
-                            subtitle: const Text('********'),
-                            trailing: const Icon(Icons.arrow_right),
-                            onTap: () {},
-                          ),
-                        ]),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Kelas",
+                          "Profil Kamu",
                           style: textTheme.titleMedium,
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 8,
                         ),
                         Text(
-                          "Data kelas kamu sekarang",
+                          "Semua orang di kelas kamu bakal bisa melihat info ini.",
                           style: textTheme.bodyMedium,
                         ),
-                        Divider(
+                        const Divider(
                           height: 8,
                         ),
                         ListTile(
-                          title: Text("Nama Kelas"),
-                          subtitle: Text("PTIK 7 B"),
-                          trailing: Icon(Icons.arrow_right),
+                          title: const Text("Nama"),
+                          subtitle: Text(user.displayName ?? "Belum diatur"),
+                          trailing: const Icon(Icons.arrow_right),
                           onTap: () {},
                         ),
                         ListTile(
-                          title: Text("Kode Kelass"),
-                          subtitle: Text("bgdgDahdGRDgd"),
-                          trailing: Icon(Icons.qr_code),
+                          title: const Text("Email"),
+                          subtitle: Text(user.email ?? "Belum diatur"),
+                          trailing: const Icon(Icons.arrow_right),
                           onTap: () {},
                         ),
                         ListTile(
-                          title: const Text('Anggota Kelas'),
-                          subtitle: const Text('22 anggota'),
+                          title: const Text('Password'),
+                          subtitle: const Text('********'),
                           trailing: const Icon(Icons.arrow_right),
                           onTap: () {},
                         ),
@@ -121,18 +82,54 @@ class AccountPage extends StatelessWidget {
                   ),
                 ),
               ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: Card(
+              //     child: Padding(
+              //       padding: const EdgeInsets.all(16),
+              //       child: Column(
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         children: [
+              //           Text(
+              //             "Kelas",
+              //             style: textTheme.titleMedium,
+              //           ),
+              //           const SizedBox(
+              //             height: 8,
+              //           ),
+              //           Text(
+              //             "Data kelas kamu sekarang",
+              //             style: textTheme.bodyMedium,
+              //           ),
+              //           const Divider(
+              //             height: 8,
+              //           ),
+              //           ListTile(
+              //             title: const Text("Nama Kelas"),
+              //             subtitle: const Text("PTIK 7 B"),
+              //             trailing: const Icon(Icons.arrow_right),
+              //             onTap: () {},
+              //           ),
+              //           ListTile(
+              //             title: const Text("Kode Kelass"),
+              //             subtitle: const Text("bgdgDahdGRDgd"),
+              //             trailing: const Icon(Icons.qr_code),
+              //             onTap: () {},
+              //           ),
+              //           ListTile(
+              //             title: const Text('Anggota Kelas'),
+              //             subtitle: const Text('22 anggota'),
+              //             trailing: const Icon(Icons.arrow_right),
+              //             onTap: () {},
+              //           ),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                    ),
-                    onPressed: () {},
-                    child: Text('Keluar kelas'),
-                  ),
-                  const SizedBox(width: 8),
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       backgroundColor: colorScheme.error,
@@ -142,14 +139,15 @@ class AccountPage extends StatelessWidget {
                       FirebaseAuth.instance.signOut();
                       Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => SignInPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const SignInPage()),
                           (_) => false);
                     },
-                    child: Text('Keluar Akun'),
+                    child: const Text('Keluar Akun'),
                   ),
                 ],
               ),
-              SizedBox(height: 64),
+              const SizedBox(height: 64),
             ],
           ),
         ),
