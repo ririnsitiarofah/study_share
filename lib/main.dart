@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Flutter Demo',
+          locale: const Locale('id', 'ID'),
           themeMode: mode,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child: SplashPage(),
+      child: const SplashPage(),
     );
   }
 }

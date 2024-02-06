@@ -3,7 +3,7 @@ import 'package:studyshare/views/home/account/account_page.dart';
 import 'package:studyshare/views/home/calendar/calendar_page.dart';
 import 'package:studyshare/views/home/directories/classrooms_page.dart';
 import 'package:studyshare/views/home/error_page.dart';
-import 'package:studyshare/views/home/overview/overview_pade.dart';
+import 'package:studyshare/views/home/overview/overview_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, this.initialIndex = 0});
