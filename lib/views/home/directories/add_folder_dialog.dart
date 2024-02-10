@@ -111,6 +111,7 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
             ),
             child: const Text('Simpan'),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Form(

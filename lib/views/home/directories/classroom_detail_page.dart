@@ -39,8 +39,7 @@ class ClassroomDetailPage extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar.large(
-                title: Text(data['nama']),
-                actions: [],
+                title: Material(child: Text(data['nama'])),
               ),
               SliverToBoxAdapter(
                 child: Card(

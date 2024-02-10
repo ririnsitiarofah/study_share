@@ -47,9 +47,21 @@ class _AddEventPageState extends State<AddEventPage> {
   @override
   void initState() {
     final date = widget.initialDate;
+    final now = DateTime.now();
+    final DateTime newDate;
+    if (date.hour == 0 && date.minute == 0) {
+      newDate = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        now.hour,
+      );
+    } else {
+      newDate = date;
+    }
     _selectedAppointment = Appointment(
-      startTime: date,
-      endTime: date.add(const Duration(hours: 1)),
+      startTime: newDate,
+      endTime: newDate.add(const Duration(minutes: 40)),
       color: Color(colorPalettes.first.color),
     );
     _selectedEventType = widget.initialType;
@@ -82,7 +94,10 @@ class _AddEventPageState extends State<AddEventPage> {
                 return;
               }
               widget.onEventAdded(
-                  _selectedAppointment, _selectedKelas!, _selectedEventType);
+                _selectedAppointment,
+                _selectedKelas!,
+                _selectedEventType,
+              );
             },
             child: const Text('Simpan'),
           ),
@@ -95,6 +110,7 @@ class _AddEventPageState extends State<AddEventPage> {
             style: textTheme.headlineSmall,
             keyboardType: TextInputType.multiline,
             textInputAction: TextInputAction.newline,
+            textCapitalization: TextCapitalization.words,
             maxLines: null,
             decoration: const InputDecoration(
               contentPadding: EdgeInsets.symmetric(horizontal: 48),
@@ -191,6 +207,23 @@ class _AddEventPageState extends State<AddEventPage> {
             },
           ),
           const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: TextField(
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              maxLines: null,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.notes),
+                hintText: 'Tambahkan deskripsi',
+                border: InputBorder.none,
+              ),
+              onChanged: (value) {
+                _selectedAppointment.notes = value;
+              },
+            ),
+          ),
+          const Divider(),
           SwitchListTile(
             title: const Text('Seharian'),
             secondary: const Icon(Icons.schedule),
@@ -281,86 +314,88 @@ class _AddEventPageState extends State<AddEventPage> {
                     ),
                   ),
           ),
-          ListTile(
-            title: InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                  initialDate: _selectedAppointment.endTime,
-                );
+          if (_selectedEventType == 'acara')
+            ListTile(
+              title: InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    firstDate:
+                        DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                    initialDate: _selectedAppointment.endTime,
+                  );
 
-                if (date != null) {
-                  setState(() {
-                    _selectedAppointment.endTime = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                      _selectedAppointment.endTime.hour,
-                      _selectedAppointment.endTime.minute,
-                    );
-                    if (_selectedAppointment.endTime
-                        .isBefore(_selectedAppointment.startTime)) {
-                      _selectedAppointment.startTime = _selectedAppointment
-                          .endTime
-                          .subtract(const Duration(hours: 1));
-                    }
-                  });
-                }
-              },
-              child: SizedBox(
-                height: 48,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    formatDate(_selectedAppointment.endTime),
-                    style: textTheme.bodyLarge,
+                  if (date != null) {
+                    setState(() {
+                      _selectedAppointment.endTime = DateTime(
+                        date.year,
+                        date.month,
+                        date.day,
+                        _selectedAppointment.endTime.hour,
+                        _selectedAppointment.endTime.minute,
+                      );
+                      if (_selectedAppointment.endTime
+                          .isBefore(_selectedAppointment.startTime)) {
+                        _selectedAppointment.startTime = _selectedAppointment
+                            .endTime
+                            .subtract(const Duration(hours: 1));
+                      }
+                    });
+                  }
+                },
+                child: SizedBox(
+                  height: 48,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      formatDate(_selectedAppointment.endTime),
+                      style: textTheme.bodyLarge,
+                    ),
                   ),
                 ),
               ),
-            ),
-            leading: const SizedBox(),
-            trailing: _selectedAppointment.isAllDay
-                ? null
-                : InkWell(
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(
-                            _selectedAppointment.endTime),
-                      );
-                      if (time == null) return;
-
-                      setState(() {
-                        _selectedAppointment.endTime = DateTime(
-                          _selectedAppointment.endTime.year,
-                          _selectedAppointment.endTime.month,
-                          _selectedAppointment.endTime.day,
-                          time.hour,
-                          time.minute,
+              leading: const SizedBox(),
+              trailing: _selectedAppointment.isAllDay
+                  ? null
+                  : InkWell(
+                      onTap: () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(
+                              _selectedAppointment.endTime),
                         );
-                        if (_selectedAppointment.endTime
-                            .isBefore(_selectedAppointment.startTime)) {
-                          _selectedAppointment.startTime = _selectedAppointment
-                              .endTime
-                              .subtract(const Duration(hours: 1));
-                        }
-                      });
-                    },
-                    child: SizedBox(
-                      height: 48,
-                      width: 48,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          formatTime(_selectedAppointment.endTime),
-                          style: textTheme.bodyLarge,
+                        if (time == null) return;
+
+                        setState(() {
+                          _selectedAppointment.endTime = DateTime(
+                            _selectedAppointment.endTime.year,
+                            _selectedAppointment.endTime.month,
+                            _selectedAppointment.endTime.day,
+                            time.hour,
+                            time.minute,
+                          );
+                          if (_selectedAppointment.endTime
+                              .isBefore(_selectedAppointment.startTime)) {
+                            _selectedAppointment.startTime =
+                                _selectedAppointment.endTime
+                                    .subtract(const Duration(hours: 1));
+                          }
+                        });
+                      },
+                      child: SizedBox(
+                        height: 48,
+                        width: 48,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            formatTime(_selectedAppointment.endTime),
+                            style: textTheme.bodyLarge,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-          ),
+            ),
           ListTile(
             title: Text(_selectedAppointment.recurrenceRule == null
                 ? 'Tidak berulang'
@@ -518,23 +553,6 @@ class _AddEventPageState extends State<AddEventPage> {
                 _selectedAppointment.color = Color(color);
               });
             },
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: TextField(
-              keyboardType: TextInputType.multiline,
-              textInputAction: TextInputAction.newline,
-              minLines: 2,
-              maxLines: null,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.notes),
-                labelText: 'Tambahkan deskripsi',
-                border: InputBorder.none,
-              ),
-              onChanged: (value) {
-                _selectedAppointment.notes = value;
-              },
-            ),
           ),
         ],
       ),

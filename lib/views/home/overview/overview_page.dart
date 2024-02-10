@@ -71,7 +71,7 @@ class _OverviewPageState extends State<OverviewPage> {
                     )
                     .where(
                       'tanggal_mulai',
-                      isGreaterThanOrEqualTo:
+                      isLessThanOrEqualTo:
                           DateTime.now().add(const Duration(days: 14)),
                     )
                     .orderBy('tanggal_mulai'),
@@ -98,13 +98,13 @@ class _OverviewPageState extends State<OverviewPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.group,
+                            Icons.task_alt,
                             size: 48,
                           ),
                           SizedBox(height: 8),
                           Center(
                             child: Text(
-                              "Tidak ada member di kelas ini",
+                              "Tidak ada tugas yang akan datang.",
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -197,7 +197,7 @@ class _OverviewPageState extends State<OverviewPage> {
                                 title: Text(doc['judul']),
                                 subtitle: Text(
                                   doc['deskripsi'] ?? 'Tidak ada deskripsi',
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: textTheme.bodyMedium?.copyWith(
                                     color: colorScheme.outline,

@@ -8,11 +8,15 @@ import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:studyshare/views/core/helpers/formatters.dart';
 import 'package:studyshare/views/home/directories/add_folder_dialog.dart';
 import 'package:studyshare/views/home/directories/add_post_dialog.dart';
 import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
+import 'package:studyshare/views/home/directories/post_detail_page.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class DirectoriesPage extends StatelessWidget {
   const DirectoriesPage({
@@ -69,13 +73,16 @@ class DirectoriesPage extends StatelessWidget {
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 8),
-                child: Text("Folder"),
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+                child: Text(
+                  "Folder",
+                  style: textTheme.titleSmall,
+                ),
               ),
             ),
             FirestoreQueryBuilder(
@@ -126,12 +133,15 @@ class DirectoriesPage extends StatelessWidget {
                     final doc = snapshot.docs[index];
                     final data = doc.data();
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Color(data['warna'] ?? 0xffcd3676),
                           child: const Icon(Icons.folder),
+                        ),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
                         ),
                         trailing: PopupMenuButton(
                           itemBuilder: (context) => [
@@ -170,11 +180,7 @@ class DirectoriesPage extends StatelessWidget {
                             }
                           },
                         ),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
                         title: Text(data['nama']),
-                        tileColor: colorScheme.surfaceVariant,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -194,10 +200,13 @@ class DirectoriesPage extends StatelessWidget {
                 );
               },
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 8),
-                child: Text("Postingan"),
+                padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+                child: Text(
+                  "Postingan",
+                  style: textTheme.titleSmall,
+                ),
               ),
             ),
             FirestoreQueryBuilder(
@@ -248,95 +257,142 @@ class DirectoriesPage extends StatelessWidget {
                     final doc = snapshot.docs[index];
                     final data = doc.data();
 
+                    final lampirans = data['lampiran'] as Map<String, dynamic>;
+
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: colorScheme.surfaceVariant,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 16),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(data['nama'],
-                                      style: textTheme.titleMedium),
-                                  if (data['deskripsi'] != null &&
-                                      (data['deskripsi'] as String)
-                                          .isNotEmpty) ...[
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostDetailPage(
+                                idPost: doc.id,
+                              ),
+                            ),
+                          );
+                        },
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(12)),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(data['nama'],
+                                        style: textTheme.titleMedium),
+                                    Text(
+                                      _formatDate(
+                                          data['terakhir_dimodifikasi']),
+                                      style: textTheme.labelSmall!.copyWith(
+                                        color: colorScheme.outline,
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
-                                    Text(data['deskripsi']),
-                                  ],
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    children: [
-                                      for (final entry
-                                          in (data['lampiran'] as Map).entries)
-                                        ActionChip(
+                                    if (data['deskripsi'] != null &&
+                                        (data['deskripsi'] as String)
+                                            .isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(data['deskripsi']),
+                                    ],
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      children: lampirans.entries
+                                          .take(2)
+                                          .map((entry) {
+                                        return ActionChip(
                                           label: Text(entry.value['nama']),
+                                          avatar: Icon(
+                                            formatFileTypeIcon(
+                                                    entry.value['tipe'])
+                                                .icon,
+                                            color: formatFileTypeColor(
+                                                entry.value['tipe']),
+                                          ),
+                                          visualDensity: VisualDensity.compact,
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(
+                                              Radius.circular(16),
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                          pressElevation: 0,
+                                          surfaceTintColor: Colors.transparent,
                                           onPressed: () => _handleLampiranTap(
                                             context: context,
                                             id: entry.key,
-                                            extension: entry.value['type'],
+                                            extension: entry.value['tipe'],
                                             url: entry.value['url'],
                                           ),
-                                        ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                    if (lampirans.length > 2) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '+ ${lampirans.length - 2} lampiran lainnya',
+                                        style: textTheme.labelMedium,
+                                      ),
                                     ],
-                                  )
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          PopupMenuButton(
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Edit'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Hapus'),
-                              ),
-                            ],
-                            onSelected: (selectedItem) async {
-                              switch (selectedItem) {
-                                case 'edit':
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AddPostDialog(
-                                        idParent: idDirektori,
-                                        idKelas: idKelas,
-                                        existingPostId: doc.id,
-                                        existingPostTitle: data['nama'],
-                                        existingPostDesc: data['deskripsi'],
+                            PopupMenuButton(
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Edit'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Hapus'),
+                                ),
+                              ],
+                              onSelected: (selectedItem) async {
+                                switch (selectedItem) {
+                                  case 'edit':
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddPostDialog(
+                                          idParent: idDirektori,
+                                          idKelas: idKelas,
+                                          existingPostId: doc.id,
+                                          existingPostTitle: data['nama'],
+                                          existingPostDesc: data['deskripsi'],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                  break;
-                                case 'delete':
-                                  final storage = FirebaseStorage.instance;
+                                    );
+                                    break;
+                                  case 'delete':
+                                    final storage = FirebaseStorage.instance;
 
-                                  final lampiran =
-                                      data['lampiran'] as Map<String, dynamic>;
-                                  for (final entry in lampiran.entries) {
-                                    await storage
-                                        .refFromURL(entry.value['url'])
+                                    final lampiran = data['lampiran']
+                                        as Map<String, dynamic>;
+                                    for (final entry in lampiran.entries) {
+                                      await storage
+                                          .refFromURL(entry.value['url'])
+                                          .delete();
+                                    }
+
+                                    await FirebaseFirestore.instance
+                                        .collection('direktori')
+                                        .doc(doc.id)
                                         .delete();
-                                  }
-
-                                  await FirebaseFirestore.instance
-                                      .collection('direktori')
-                                      .doc(doc.id)
-                                      .delete();
-                                  break;
-                              }
-                            },
-                          ),
-                        ],
+                                    break;
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -347,6 +403,7 @@ class DirectoriesPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: SpeedDial(
+        heroTag: 'fab',
         icon: Icons.add_box_rounded,
         shape: Theme.of(context).floatingActionButtonTheme.shape ??
             const RoundedRectangleBorder(
@@ -365,6 +422,7 @@ class DirectoriesPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  fullscreenDialog: true,
                   builder: (context) => AddPostDialog(
                     idParent: idDirektori,
                     idKelas: idKelas,
@@ -380,6 +438,7 @@ class DirectoriesPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  fullscreenDialog: true,
                   builder: (context) => AddFolderDialog(
                     idParent: idDirektori,
                     idKelas: idKelas,
@@ -425,5 +484,16 @@ class DirectoriesPage extends StatelessWidget {
         ),
       );
     }
+  }
+
+  String _formatDate(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+
+    if (date.isAfter(now.subtract(const Duration(days: 2)))) {
+      return timeago.format(date);
+    }
+
+    return DateFormat('d MMM yyyy HH:mm').format(date);
   }
 }

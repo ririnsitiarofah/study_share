@@ -1,19 +1,23 @@
-import 'package:studyshare/main.dart';
 import 'package:flutter/material.dart';
+import 'package:studyshare/main.dart';
 
 class SettingPage extends StatelessWidget {
   const SettingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
+          const SliverAppBar.large(
             title: Text("Pengaturan"),
           ),
           SliverToBoxAdapter(
             child: Card(
+              margin: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,6 +29,7 @@ class SettingPage extends StatelessWidget {
                     ),
                     child: Text(
                       'Tampilan',
+                      style: textTheme.titleSmall,
                     ),
                   ),
                   ValueListenableBuilder<ThemeMode>(
@@ -46,10 +51,10 @@ class SettingPage extends StatelessWidget {
                             context: context,
                             builder: (context) {
                               return SimpleDialog(
-                                title: Text("Pilih Tema"),
+                                title: const Text("Pilih Tema"),
                                 children: [
                                   RadioListTile(
-                                    title: Text("Sistem"),
+                                    title: const Text("Sistem"),
                                     value: ThemeMode.system,
                                     groupValue: mode,
                                     onChanged: (value) {
@@ -60,7 +65,7 @@ class SettingPage extends StatelessWidget {
                                     },
                                   ),
                                   RadioListTile(
-                                    title: Text("Terang"),
+                                    title: const Text("Terang"),
                                     value: ThemeMode.light,
                                     groupValue: mode,
                                     onChanged: (value) {
@@ -71,7 +76,7 @@ class SettingPage extends StatelessWidget {
                                     },
                                   ),
                                   RadioListTile(
-                                    title: Text("Gelap"),
+                                    title: const Text("Gelap"),
                                     value: ThemeMode.dark,
                                     groupValue: mode,
                                     onChanged: (value) {

@@ -66,7 +66,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     Text(
-                      _formatDate(data['tanggal_mulai'], null),
+                      _formatRangeDate(data['tanggal_mulai'], null),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
@@ -74,10 +74,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
               if (data['deskripsi'] != null)
                 ListTile(
-                  leading: const Icon(Icons.notes),
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: const Icon(Icons.notes),
+                  ),
                   titleAlignment: ListTileTitleAlignment.top,
                   title: Text(data['deskripsi']),
                 ),
+              Divider(),
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: Text('Dibuat oleh'),
+                subtitle: Text(data['nama_pemilik']),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_today),
+                title: Text('Dibuat pada'),
+                subtitle: Text(_formatDate(data['tanggal_dibuat'])),
+              ),
             ],
           );
         },
@@ -97,7 +112,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  String _formatDate(Timestamp startDate, Timestamp? endDate) {
+  String _formatDate(Timestamp date) =>
+      DateFormat('EEEE, d MMM yyyy • HH:mm').format(date.toDate());
+
+  String _formatRangeDate(Timestamp startDate, Timestamp? endDate) {
     if (endDate == null) {
       return DateFormat('EEEE, d MMM yyyy • HH:mm').format(startDate.toDate());
     } else if (startDate.toDate().day == endDate.toDate().day) {

@@ -50,6 +50,29 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
               ),
             ),
           ),
+          actions: [
+            PopupMenuButton(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'info',
+                  child: Text("Info kelas"),
+                ),
+              ],
+              onSelected: (value) {
+                switch (value) {
+                  case 'info':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ClassroomDetailPage(idKelas: widget.idKelas),
+                      ),
+                    );
+                    break;
+                }
+              },
+            ),
+          ],
           bottom: _selectedIndex == 0
               ? TabBar(
                   onTap: (index) {},

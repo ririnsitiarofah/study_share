@@ -12,12 +12,14 @@ class ClassroomsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar.large(
-            title: const Text("Kelas"),
+          const SliverAppBar.large(
+            title: Text("Kelas"),
           )
         ],
         body: FirestoreListView(
@@ -77,31 +79,10 @@ class ClassroomsPage extends StatelessWidget {
           itemBuilder: (context, snapshot) {
             final memberKelas = snapshot.data();
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-              child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.class_),
-                ),
-                // trailing: PopupMenuButton(
-                //   itemBuilder: (context) => [
-                //     const PopupMenuItem(
-                //       value: 'info',
-                //       child: Text('Detail'),
-                //     ),
-                //   ],
-                //   onSelected: (selectedItem) async {
-                //     switch (selectedItem) {
-                //       case 'info':
-                //         break;
-                //     }
-                //   },
-                // ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                title: Text(memberKelas["nama_kelas"] ?? 'asas'),
-                tileColor: colorScheme.surfaceVariant,
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+              child: InkWell(
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -115,12 +96,32 @@ class ClassroomsPage extends StatelessWidget {
                     ),
                   );
                 },
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Text(
+                            memberKelas["nama_kelas"],
+                            style: textTheme.titleLarge,
+                          ),
+                          Text(
+                            memberKelas["deskripsi"] ?? '',
+                            style: textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
         ),
       ),
       floatingActionButton: SpeedDial(
+        heroTag: 'fab',
         icon: Icons.add,
         shape: Theme.of(context).floatingActionButtonTheme.shape ??
             const RoundedRectangleBorder(

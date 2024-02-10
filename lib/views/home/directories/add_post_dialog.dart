@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:studyshare/views/core/helpers/formatters.dart';
 import 'package:uuid/uuid.dart';
 
 class AddPostDialog extends StatefulWidget {
@@ -91,8 +93,8 @@ class _AddPostDialogState extends State<AddPostDialog> {
                   lampirans[id] = {
                     'nama': file.name,
                     'url': url,
-                    'type': file.extension,
-                    'size': file.size,
+                    'tipe': file.extension,
+                    'ukuran': file.size,
                   };
                 }
 
@@ -130,6 +132,7 @@ class _AddPostDialogState extends State<AddPostDialog> {
             ),
             child: const Text('Simpan'),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Form(
@@ -205,8 +208,13 @@ class _AddPostDialogState extends State<AddPostDialog> {
                                   if (result == null) return;
 
                                   setState(() {
-                                    _selectedFiles.clear();
-                                    _selectedFiles.addAll(result.files);
+                                    for (final file in result.files) {
+                                      if (_selectedFiles
+                                          .any((e) => e.path == file.path)) {
+                                        continue;
+                                      }
+                                      _selectedFiles.add(file);
+                                    }
                                   });
                                 } catch (e, stackTrace) {
                                   log(e.toString(),
@@ -230,15 +238,12 @@ class _AddPostDialogState extends State<AddPostDialog> {
               ),
             ),
             if (_selectedFiles.isNotEmpty) ...[
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text(
                     'Berkas yang dipilih',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: textTheme.titleMedium,
                   ),
                 ),
               ),
@@ -247,21 +252,32 @@ class _AddPostDialogState extends State<AddPostDialog> {
                 itemBuilder: (context, index) {
                   final file = _selectedFiles[index];
 
-                  return ListTile(
-                    title: Text(file.name),
-                    leading: CircleAvatar(
-                      child: _isImage(file.extension)
-                          ? Image.file(
-                              File(file.path!),
-                            )
-                          : const Icon(Icons.insert_drive_file),
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 16,
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          _selectedFiles.removeAt(index);
-                        });
+                    child: ListTile(
+                      title: Text(file.name),
+                      leading: CircleAvatar(
+                        backgroundColor: formatFileTypeColor(file.extension),
+                        child: _isImage(file.extension)
+                            ? Image.file(
+                                File(file.path!),
+                              )
+                            : formatFileTypeIcon(file.extension),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            _selectedFiles.removeAt(index);
+                          });
+                        },
+                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
+                      onTap: () {
+                        OpenFilex.open(file.path!);
                       },
                     ),
                   );

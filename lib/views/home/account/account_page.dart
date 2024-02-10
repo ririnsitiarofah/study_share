@@ -21,13 +21,62 @@ class AccountPage extends StatelessWidget {
               title: const Text("Akun"),
               backgroundColor: colorScheme.background,
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings_rounded),
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SettingPage()));
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'settings',
+                      child: Text("Pengaturan"),
+                    ),
+                    const PopupMenuItem(
+                      value: 'sign_out',
+                      child: Text("Keluar"),
+                    ),
+                  ],
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'settings':
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingPage(),
+                          ),
+                        );
+                        break;
+                      case 'sign_out':
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            icon: const Icon(Icons.logout),
+                            title: const Text("Keluar akun"),
+                            content: const Text(
+                              "Apakah kamu yakin ingin keluar akun?",
+                            ),
+                            actions: [
+                              OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Batal"),
+                              ),
+                              OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colorScheme.error,
+                                ),
+                                onPressed: () {
+                                  FirebaseAuth.instance.signOut();
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SignInPage(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                                child: const Text("Keluar"),
+                              ),
+                            ],
+                          ),
+                        );
+                        break;
+                    }
                   },
                 ),
               ],
@@ -81,71 +130,6 @@ class AccountPage extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              // SizedBox(
-              //   width: double.infinity,
-              //   child: Card(
-              //     child: Padding(
-              //       padding: const EdgeInsets.all(16),
-              //       child: Column(
-              //         crossAxisAlignment: CrossAxisAlignment.start,
-              //         children: [
-              //           Text(
-              //             "Kelas",
-              //             style: textTheme.titleMedium,
-              //           ),
-              //           const SizedBox(
-              //             height: 8,
-              //           ),
-              //           Text(
-              //             "Data kelas kamu sekarang",
-              //             style: textTheme.bodyMedium,
-              //           ),
-              //           const Divider(
-              //             height: 8,
-              //           ),
-              //           ListTile(
-              //             title: const Text("Nama Kelas"),
-              //             subtitle: const Text("PTIK 7 B"),
-              //             trailing: const Icon(Icons.arrow_right),
-              //             onTap: () {},
-              //           ),
-              //           ListTile(
-              //             title: const Text("Kode Kelass"),
-              //             subtitle: const Text("bgdgDahdGRDgd"),
-              //             trailing: const Icon(Icons.qr_code),
-              //             onTap: () {},
-              //           ),
-              //           ListTile(
-              //             title: const Text('Anggota Kelas'),
-              //             subtitle: const Text('22 anggota'),
-              //             trailing: const Icon(Icons.arrow_right),
-              //             onTap: () {},
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                    ),
-                    onPressed: () {
-                      FirebaseAuth.instance.signOut();
-                      Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignInPage()),
-                          (_) => false);
-                    },
-                    child: const Text('Keluar Akun'),
-                  ),
-                ],
               ),
               const SizedBox(height: 64),
             ],

@@ -76,7 +76,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
       ),
       floatingActionButton: SpeedDial(
-        icon: Icons.add_box_rounded,
+        icon: Icons.add,
         shape: Theme.of(context).floatingActionButtonTheme.shape ??
             const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
@@ -118,8 +118,11 @@ class _CalendarPageState extends State<CalendarPage> {
                 'id_pemilik': user.uid,
                 'id_kelas': kelas['id'],
                 'judul': appointment.subject,
-                'tanggal_mulai': appointment.startTime,
-                'tanggal_selesai': appointment.endTime,
+                'nama_pemilik': user.displayName,
+                'tanggal_mulai': Timestamp.fromDate(appointment.startTime),
+                'tanggal_selesai': eventType == 'acara'
+                    ? Timestamp.fromDate(appointment.endTime)
+                    : null,
                 'ulangi': appointment.recurrenceRule == null
                     ? 'none'
                     : switch (SfCalendar.parseRRule(
@@ -138,15 +141,22 @@ class _CalendarPageState extends State<CalendarPage> {
                 'tanggal_dibuat': Timestamp.now(),
               };
 
-              await FirebaseFirestore.instance
+              final doc = await FirebaseFirestore.instance
                   .collection('acara')
                   .add(eventMap);
 
               Navigator.pop(context);
 
-              setState(() {
-                _events.appointments.add(eventMap);
+              _events.appointments.add({
+                'id': doc.id,
+                ...eventMap,
               });
+              _events.notifyListeners(CalendarDataSourceAction.add, [
+                {
+                  'id': doc.id,
+                  ...eventMap,
+                }
+              ]);
             } catch (e, stackTrace) {
               log(e.toString(), error: e, stackTrace: stackTrace);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -179,7 +189,43 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   DateTime getEndTime(int index) {
-    return (appointments[index]['tanggal_selesai'] as Timestamp).toDate();
+    if (appointments[index]['tanggal_selesai'] != null) {
+      return (appointments[index]['tanggal_selesai'] as Timestamp).toDate();
+    }
+    return getStartTime(index).add(const Duration(hours: 1));
+  }
+
+  @override
+  String? getNotes(int index) {
+    if (appointments[index]['deskripsi'] != null) {
+      return appointments[index]['deskripsi'];
+    }
+    return super.getNotes(index);
+  }
+
+  @override
+  Object? getRecurrenceId(int index) {
+    return appointments[index]['id'];
+  }
+
+  @override
+  String? getRecurrenceRule(int index) {
+    // if (appointments[index]['ulangi'] != 'none') {
+    //   final properties = RecurrenceProperties(startDate: getStartTime(index));
+    //   return SfCalendar.generateRRule(
+    //     switch (appointments[index]['ulangi']) {
+    //       'harian' => properties..recurrenceType = RecurrenceType.daily,
+    //       'mingguan' => properties..recurrenceType = RecurrenceType.weekly,
+    //       'bulanan' => properties..recurrenceType = RecurrenceType.monthly,
+    //       'tahunan' => properties..recurrenceType = RecurrenceType.yearly,
+    //       _ => throw Exception(
+    //           'Invalid recurrence type: ${appointments[index]['ulangi']}'),
+    //     },
+    //     getStartTime(index),
+    //     getEndTime(index),
+    //   );
+    // }
+    // return super.getRecurrenceRule(index);
   }
 
   @override
@@ -194,7 +240,8 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   bool isAllDay(int index) {
-    return appointments[index]['seharian'];
+    return appointments[index]['seharian'] ||
+        appointments[index]['tanggal_selesai'] == null;
   }
 
   @override
