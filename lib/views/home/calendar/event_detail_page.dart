@@ -119,15 +119,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (endDate == null) {
       return DateFormat('EEEE, d MMM yyyy • HH:mm').format(startDate.toDate());
     } else if (startDate.toDate().day == endDate.toDate().day) {
-      return DateFormat('EEEE, d MMM yyyy • HH:mm')
+      return DateFormat('EEEE, d MMM yyyy • HH:mm -')
           .format(startDate.toDate())
           .replaceFirst(
-              '•', '• ${DateFormat('HH:mm').format(endDate.toDate())}');
+              '-', '- ${DateFormat('HH:mm').format(endDate.toDate())}');
     } else {
-      return DateFormat('EEEE, d MMM yyyy • HH:mm')
+      return DateFormat('EEEE, d MMM yyyy, HH:mm -')
           .format(startDate.toDate())
-          .replaceFirst('•',
-              '• ${DateFormat('EEEE, d MMM yyyy • HH:mm').format(endDate.toDate())}');
+          .replaceFirst('-',
+              '- ${DateFormat('EEEE, d MMM yyyy, HH:mm').format(endDate.toDate())}');
     }
   }
 }

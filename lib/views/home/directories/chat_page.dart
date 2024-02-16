@@ -125,102 +125,104 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return FutureBuilder(
-      future: _init(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+    return NestedScrollView(
+      headerSliverBuilder: (context, innerBoxIsScrolled) => [
+        const SliverAppBar(
+          title: Text('Obrolan'),
+        ),
+      ],
+      body: FutureBuilder(
+        future: _init(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Something went wrong! ${snapshot.error}',
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Something went wrong! ${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
 
-        return StreamBuilder<types.Room>(
-          initialData: _room,
-          stream: FirebaseChatCore.instance.room(_room!.id),
-          builder: (context, roomSnapshot) {
-            return StreamBuilder<List<types.Message>>(
-              initialData: const [],
-              stream: FirebaseChatCore.instance.messages(roomSnapshot.data!),
-              builder: (context, messageSnapshot) {
-                return Chat(
-                  showUserNames: true,
-                  nameBuilder: (user) {
-                    return Text(
-                      roomSnapshot.data?.metadata?['users']?[user.id] ??
-                          'Pengguna StudyShare',
-                      style: textTheme.titleSmall?.copyWith(
-                        color: colorScheme.primary,
-                      ),
-                    );
-                  },
-                  emptyState:
-                      messageSnapshot.connectionState != ConnectionState.active
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : Center(
-                              child: Text(
-                                'Belum ada pesan',
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                ),
+          return StreamBuilder<types.Room>(
+            initialData: _room,
+            stream: FirebaseChatCore.instance.room(_room!.id),
+            builder: (context, roomSnapshot) {
+              return StreamBuilder<List<types.Message>>(
+                initialData: const [],
+                stream: FirebaseChatCore.instance.messages(roomSnapshot.data!),
+                builder: (context, messageSnapshot) {
+                  return Chat(
+                    showUserNames: true,
+                    nameBuilder: (user) {
+                      return Text(
+                        roomSnapshot.data?.metadata?['users']?[user.id] ??
+                            'Pengguna StudyShare',
+                        style: textTheme.titleSmall?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      );
+                    },
+                    emptyState: messageSnapshot.connectionState !=
+                            ConnectionState.active
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : Center(
+                            child: Text(
+                              'Belum ada pesan',
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
                               ),
                             ),
-                  theme: DefaultChatTheme(
-                    backgroundColor: colorScheme.background,
-                    inputElevation: 8,
-                    sentMessageBodyTextStyle: textTheme.bodyMedium!.copyWith(
-                      color: colorScheme.onPrimaryContainer,
+                          ),
+                    theme: DefaultChatTheme(
+                      backgroundColor: colorScheme.background,
+                      inputElevation: 8,
+                      sentMessageBodyTextStyle: textTheme.bodyMedium!.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      receivedMessageBodyTextStyle:
+                          textTheme.bodyMedium!.copyWith(
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                      inputBorderRadius:
+                          const BorderRadius.all(Radius.circular(36)),
+                      inputPadding: const EdgeInsets.fromLTRB(16, 12, 0, 12),
+                      inputMargin: const EdgeInsets.all(8),
+                      inputBackgroundColor: colorScheme.surface,
+                      inputSurfaceTintColor: colorScheme.surfaceTint,
+                      primaryColor: colorScheme.primaryContainer,
+                      secondaryColor: colorScheme.secondaryContainer,
+                      errorColor: colorScheme.error,
+                      sendButtonIcon: const Icon(Icons.send),
+                      sendButtonMargin: EdgeInsets.zero,
+                      messageInsetsVertical: 6,
+                      messageInsetsHorizontal: 12,
                     ),
-                    receivedMessageBodyTextStyle:
-                        textTheme.bodyMedium!.copyWith(
-                      color: colorScheme.onSecondaryContainer,
+                    inputOptions: const InputOptions(
+                      sendButtonVisibilityMode: SendButtonVisibilityMode.always,
                     ),
-                    inputBorderRadius:
-                        const BorderRadius.all(Radius.circular(36)),
-                    inputPadding: const EdgeInsets.fromLTRB(16, 12, 0, 12),
-                    inputMargin: const EdgeInsets.all(8),
-                    inputBackgroundColor: colorScheme.surface,
-                    inputSurfaceTintColor: colorScheme.surfaceTint,
-                    primaryColor: colorScheme.primaryContainer,
-                    secondaryColor: colorScheme.secondaryContainer,
-                    errorColor: colorScheme.error,
-                    sendButtonIcon: const Icon(Icons.send),
-                    sendButtonMargin: EdgeInsets.zero,
-                    messageInsetsVertical: 6,
-                    messageInsetsHorizontal: 12,
-                  ),
-                  inputOptions: const InputOptions(
-                    sendButtonVisibilityMode: SendButtonVisibilityMode.always,
-                  ),
-                  messages: messageSnapshot.data ?? [],
-                  onPreviewDataFetched: _handlePreviewDataFetched,
-                  onSendPressed: _handleSendPressed,
-                  user: _user,
-                );
-              },
-            );
-          },
-        );
-      },
+                    messages: messageSnapshot.data ?? [],
+                    onPreviewDataFetched: _handlePreviewDataFetched,
+                    onSendPressed: _handleSendPressed,
+                    user: _user,
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

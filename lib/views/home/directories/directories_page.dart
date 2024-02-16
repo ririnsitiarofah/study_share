@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
@@ -71,383 +70,341 @@ class DirectoriesPage extends StatelessWidget {
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
             .orderBy('nama');
 
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
-                child: Text(
-                  "Folder",
-                  style: textTheme.titleSmall,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+              child: Text(
+                "Folder",
+                style: textTheme.titleSmall,
               ),
             ),
-            FirestoreQueryBuilder(
-              query: folderQuery,
-              builder: (context, snapshot, child) {
-                if (snapshot.isFetching) {
-                  return const SliverToBoxAdapter(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
+          ),
+          FirestoreQueryBuilder(
+            query: folderQuery,
+            builder: (context, snapshot, child) {
+              if (snapshot.isFetching) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
-                if (snapshot.hasError) {
-                  return SliverToBoxAdapter(
-                    child: Center(
-                      child: Text('Something went wrong! ${snapshot.error}'),
-                    ),
-                  );
-                }
+              if (snapshot.hasError) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Text('Something went wrong! ${snapshot.error}'),
+                  ),
+                );
+              }
 
-                if (snapshot.docs.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.folder_open,
-                          size: 48,
-                          color: colorScheme.onSurface.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 8),
-                        const Center(
-                          child: Text("Tidak ada folder"),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+              if (snapshot.docs.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.folder_open,
+                        size: 48,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      const Center(
+                        child: Text("Tidak ada folder"),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-                return SliverList.builder(
-                  itemCount: snapshot.docs.length,
-                  itemBuilder: (context, index) {
-                    if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
-                      snapshot.fetchMore();
-                    }
+              return SliverList.builder(
+                itemCount: snapshot.docs.length,
+                itemBuilder: (context, index) {
+                  if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
+                    snapshot.fetchMore();
+                  }
 
-                    final doc = snapshot.docs[index];
-                    final data = doc.data();
+                  final doc = snapshot.docs[index];
+                  final data = doc.data();
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Color(data['warna'] ?? 0xffcd3676),
-                          child: const Icon(Icons.folder),
-                        ),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
-                        ),
-                        trailing: PopupMenuButton(
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Edit'),
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Color(data['warna'] ?? 0xffcd3676),
+                        child: const Icon(Icons.folder),
+                      ),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      trailing: PopupMenuButton(
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Hapus'),
+                          ),
+                        ],
+                        onSelected: (selectedItem) async {
+                          switch (selectedItem) {
+                            case 'edit':
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddFolderDialog(
+                                    idParent: idDirektori,
+                                    idKelas: idKelas,
+                                    existingFolderId: doc.id,
+                                    existingFolderName: data['nama'],
+                                    existingFolderDesc: data['deskripsi'],
+                                    existingFolderColor: data['warna'],
+                                  ),
+                                ),
+                              );
+                              break;
+                            case 'delete':
+                              await FirebaseFirestore.instance
+                                  .collection('direktori')
+                                  .doc(doc.id)
+                                  .delete();
+                              break;
+                          }
+                        },
+                      ),
+                      title: Text(data['nama']),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DirectoriesWrapperPage(
+                              idKelas: idKelas,
+                              namaKelas: namaKelas,
+                              idDirektori: doc.id,
+                              namaDirektori: data['nama'],
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Hapus'),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+              child: Text(
+                "Postingan",
+                style: textTheme.titleSmall,
+              ),
+            ),
+          ),
+          FirestoreQueryBuilder(
+            query: postQuery,
+            builder: (context, snapshot, child) {
+              if (snapshot.isFetching) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Text('Something went wrong! ${snapshot.error}'),
+                  ),
+                );
+              }
+
+              if (snapshot.docs.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.article,
+                        size: 48,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      const Center(
+                        child: Text("Tidak ada postingan"),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return SliverList.builder(
+                itemCount: snapshot.docs.length,
+                itemBuilder: (context, index) {
+                  if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
+                    snapshot.fetchMore();
+                  }
+
+                  final doc = snapshot.docs[index];
+                  final data = doc.data();
+
+                  final lampirans = data['lampiran'] as Map<String, dynamic>;
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostDetailPage(
+                              idPost: doc.id,
                             ),
-                          ],
-                          onSelected: (selectedItem) async {
-                            switch (selectedItem) {
-                              case 'edit':
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddFolderDialog(
-                                      idParent: idDirektori,
-                                      idKelas: idKelas,
-                                      existingFolderId: doc.id,
-                                      existingFolderName: data['nama'],
-                                      existingFolderDesc: data['deskripsi'],
-                                      existingFolderColor: data['warna'],
+                          ),
+                        );
+                      },
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['nama'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: textTheme.titleMedium,
+                                  ),
+                                  Text(
+                                    _formatDate(data['terakhir_dimodifikasi']),
+                                    style: textTheme.labelSmall!.copyWith(
+                                      color: colorScheme.outline,
                                     ),
                                   ),
-                                );
-                                break;
-                              case 'delete':
-                                await FirebaseFirestore.instance
-                                    .collection('direktori')
-                                    .doc(doc.id)
-                                    .delete();
-                                break;
-                            }
-                          },
-                        ),
-                        title: Text(data['nama']),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DirectoriesWrapperPage(
-                                idKelas: idKelas,
-                                namaKelas: namaKelas,
-                                idDirektori: doc.id,
-                                namaDirektori: data['nama'],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-                child: Text(
-                  "Postingan",
-                  style: textTheme.titleSmall,
-                ),
-              ),
-            ),
-            FirestoreQueryBuilder(
-              query: postQuery,
-              builder: (context, snapshot, child) {
-                if (snapshot.isFetching) {
-                  return const SliverToBoxAdapter(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return SliverToBoxAdapter(
-                    child: Center(
-                      child: Text('Something went wrong! ${snapshot.error}'),
-                    ),
-                  );
-                }
-
-                if (snapshot.docs.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.article,
-                          size: 48,
-                          color: colorScheme.onSurface.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 8),
-                        const Center(
-                          child: Text("Tidak ada postingan"),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return SliverList.builder(
-                  itemCount: snapshot.docs.length,
-                  itemBuilder: (context, index) {
-                    if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
-                      snapshot.fetchMore();
-                    }
-
-                    final doc = snapshot.docs[index];
-                    final data = doc.data();
-
-                    final lampirans = data['lampiran'] as Map<String, dynamic>;
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PostDetailPage(
-                                idPost: doc.id,
-                              ),
-                            ),
-                          );
-                        },
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(12)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(data['nama'],
-                                        style: textTheme.titleMedium),
-                                    Text(
-                                      _formatDate(
-                                          data['terakhir_dimodifikasi']),
-                                      style: textTheme.labelSmall!.copyWith(
-                                        color: colorScheme.outline,
-                                      ),
-                                    ),
+                                  const SizedBox(height: 4),
+                                  if (data['deskripsi'] != null &&
+                                      (data['deskripsi'] as String)
+                                          .isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    if (data['deskripsi'] != null &&
-                                        (data['deskripsi'] as String)
-                                            .isNotEmpty) ...[
-                                      const SizedBox(height: 4),
-                                      Text(data['deskripsi']),
-                                    ],
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 8,
-                                      children: lampirans.entries
-                                          .take(2)
-                                          .map((entry) {
-                                        return ActionChip(
-                                          label: Text(entry.value['nama']),
-                                          avatar: Icon(
-                                            formatFileTypeIcon(
-                                                    entry.value['tipe'])
-                                                .icon,
-                                            color: formatFileTypeColor(
-                                                entry.value['tipe']),
-                                          ),
-                                          visualDensity: VisualDensity.compact,
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(
-                                              Radius.circular(16),
-                                            ),
-                                          ),
-                                          elevation: 0,
-                                          pressElevation: 0,
-                                          surfaceTintColor: Colors.transparent,
-                                          onPressed: () => _handleLampiranTap(
-                                            context: context,
-                                            id: entry.key,
-                                            extension: entry.value['tipe'],
-                                            url: entry.value['url'],
-                                          ),
-                                        );
-                                      }).toList(),
+                                    Text(
+                                      data['deskripsi'],
+                                      maxLines: 6,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (lampirans.length > 2) ...[
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '+ ${lampirans.length - 2} lampiran lainnya',
-                                        style: textTheme.labelMedium,
-                                      ),
-                                    ],
                                   ],
-                                ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    children:
+                                        lampirans.entries.take(2).map((entry) {
+                                      return ActionChip(
+                                        label: Text(entry.value['nama']),
+                                        avatar: Icon(
+                                          formatFileTypeIcon(
+                                                  entry.value['tipe'])
+                                              .icon,
+                                          color: formatFileTypeColor(
+                                              entry.value['tipe']),
+                                        ),
+                                        visualDensity: VisualDensity.compact,
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(16),
+                                          ),
+                                        ),
+                                        elevation: 0,
+                                        pressElevation: 0,
+                                        surfaceTintColor: Colors.transparent,
+                                        onPressed: () => _handleLampiranTap(
+                                          context: context,
+                                          id: entry.key,
+                                          extension: entry.value['tipe'],
+                                          url: entry.value['url'],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  if (lampirans.length > 2) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '+ ${lampirans.length - 2} lampiran lainnya',
+                                      style: textTheme.labelMedium,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                            PopupMenuButton(
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Text('Edit'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Hapus'),
-                                ),
-                              ],
-                              onSelected: (selectedItem) async {
-                                switch (selectedItem) {
-                                  case 'edit':
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AddPostDialog(
-                                          idParent: idDirektori,
-                                          idKelas: idKelas,
-                                          existingPostId: doc.id,
-                                          existingPostTitle: data['nama'],
-                                          existingPostDesc: data['deskripsi'],
-                                        ),
+                          ),
+                          PopupMenuButton(
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text('Edit'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Hapus'),
+                              ),
+                            ],
+                            onSelected: (selectedItem) async {
+                              switch (selectedItem) {
+                                case 'edit':
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddPostDialog(
+                                        idParent: idDirektori,
+                                        idKelas: idKelas,
+                                        existingPostId: doc.id,
+                                        existingPostTitle: data['nama'],
+                                        existingPostDesc: data['deskripsi'],
                                       ),
-                                    );
-                                    break;
-                                  case 'delete':
-                                    final storage = FirebaseStorage.instance;
+                                    ),
+                                  );
+                                  break;
+                                case 'delete':
+                                  final storage = FirebaseStorage.instance;
 
-                                    final lampiran = data['lampiran']
-                                        as Map<String, dynamic>;
-                                    for (final entry in lampiran.entries) {
-                                      await storage
-                                          .refFromURL(entry.value['url'])
-                                          .delete();
-                                    }
-
-                                    await FirebaseFirestore.instance
-                                        .collection('direktori')
-                                        .doc(doc.id)
+                                  final lampiran =
+                                      data['lampiran'] as Map<String, dynamic>;
+                                  for (final entry in lampiran.entries) {
+                                    await storage
+                                        .refFromURL(entry.value['url'])
                                         .delete();
-                                    break;
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                                  }
+
+                                  await FirebaseFirestore.instance
+                                      .collection('direktori')
+                                      .doc(doc.id)
+                                      .delete();
+                                  break;
+                              }
+                            },
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: SpeedDial(
-        heroTag: 'fab',
-        icon: Icons.add_box_rounded,
-        shape: Theme.of(context).floatingActionButtonTheme.shape ??
-            const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(16),
-              ),
-            ),
-        activeIcon: Icons.close,
-        childrenButtonSize: const Size.square(48),
-        spaceBetweenChildren: 16,
-        childPadding: const EdgeInsets.all(4),
-        children: [
-          SpeedDialChild(
-            label: ("Buat Postingan"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (context) => AddPostDialog(
-                    idParent: idDirektori,
-                    idKelas: idKelas,
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
-            child: const Icon(Icons.post_add_rounded),
           ),
-          SpeedDialChild(
-            label: ('Buat folder'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (context) => AddFolderDialog(
-                    idParent: idDirektori,
-                    idKelas: idKelas,
-                  ),
-                ),
-              );
-            },
-            child: const Icon(Icons.create_new_folder),
-          )
+          const SliverPadding(
+            padding: EdgeInsets.symmetric(vertical: 48),
+          ),
         ],
       ),
     );

@@ -16,6 +16,8 @@ class PostDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: FutureBuilder(
         future: FirebaseFirestore.instance
@@ -49,10 +51,13 @@ class PostDetailPage extends StatelessWidget {
             body: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                if (data['deskripsi'] != null)
-                  ListTile(
-                    title: Text(data['deskripsi']),
+                if (data['deskripsi'] != null) ...[
+                  Text(
+                    data['deskripsi'],
+                    style: textTheme.bodyLarge,
                   ),
+                  const SizedBox(height: 8),
+                ],
                 ...lampirans.entries.map(
                   (entry) {
                     final key = entry.key;
@@ -68,6 +73,9 @@ class PostDetailPage extends StatelessWidget {
                         ),
                         title: Text(value['nama']),
                         subtitle: Text(_formatSize(value['ukuran'])),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         onTap: () => _handleLampiranTap(
                           context: context,
                           id: key,
@@ -78,11 +86,7 @@ class PostDetailPage extends StatelessWidget {
                     );
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.date_range),
-                  title: const Text("Deadline"),
-                  subtitle: Text(_formatDate(data['tanggal_mulai'])),
-                ),
+                const Divider(),
                 ListTile(
                   leading: const Icon(Icons.date_range),
                   title: const Text("Tanggal dibuat"),

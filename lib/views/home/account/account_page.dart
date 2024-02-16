@@ -89,45 +89,48 @@ class AccountPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Profil Kamu",
-                          style: textTheme.titleMedium,
+                  margin: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Profil Kamu",
+                              style: textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Semua orang di kelas kamu bakal bisa melihat info ini.",
+                              style: textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            const Divider(
+                              height: 8,
+                            ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Text(
-                          "Semua orang di kelas kamu bakal bisa melihat info ini.",
-                          style: textTheme.bodyMedium,
-                        ),
-                        const Divider(
-                          height: 8,
-                        ),
-                        ListTile(
-                          title: const Text("Nama"),
-                          subtitle: Text(user.displayName ?? "Belum diatur"),
-                          trailing: const Icon(Icons.arrow_right),
-                          onTap: () {},
-                        ),
-                        ListTile(
-                          title: const Text("Email"),
-                          subtitle: Text(user.email ?? "Belum diatur"),
-                          trailing: const Icon(Icons.arrow_right),
-                          onTap: () {},
-                        ),
-                        ListTile(
-                          title: const Text('Password'),
-                          subtitle: const Text('********'),
-                          trailing: const Icon(Icons.arrow_right),
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
+                      ),
+                      ListTile(
+                        title: const Text("Nama"),
+                        subtitle: Text(user.displayName!),
+                      ),
+                      ListTile(
+                        title: const Text("Email"),
+                        subtitle: Text(user.email ?? "Belum diatur"),
+                        trailing: const Icon(Icons.arrow_right),
+                        onTap: () {},
+                      ),
+                      ListTile(
+                        title: const Text('Password'),
+                        subtitle: const Text('********'),
+                        trailing: const Icon(Icons.arrow_right),
+                        onTap: () {},
+                      ),
+                    ],
                   ),
                 ),
               ),
