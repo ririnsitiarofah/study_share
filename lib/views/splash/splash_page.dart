@@ -21,7 +21,13 @@ class _SplashPageState extends State<SplashPage> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        final user = FirebaseAuth.instance.currentUser!;
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const SignInPage()));
+          return;
+        }
+
         final snapshotMember = await FirebaseFirestore.instance
             .collection('member_kelas')
             .where('id_user', isEqualTo: user.uid)

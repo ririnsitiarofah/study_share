@@ -184,11 +184,17 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   DateTime getStartTime(int index) {
+    if (index == -1) {
+      return DateTime.now();
+    }
     return (appointments[index]['tanggal_mulai'] as Timestamp).toDate();
   }
 
   @override
   DateTime getEndTime(int index) {
+    if (index == -1) {
+      return DateTime.now();
+    }
     if (appointments[index]['tanggal_selesai'] != null) {
       return (appointments[index]['tanggal_selesai'] as Timestamp).toDate();
     }
@@ -197,6 +203,9 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   String? getNotes(int index) {
+    if (index == -1) {
+      return 'Kosong';
+    }
     if (appointments[index]['deskripsi'] != null) {
       return appointments[index]['deskripsi'];
     }
@@ -205,6 +214,7 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   Object? getRecurrenceId(int index) {
+  
     return appointments[index]['id'];
   }
 
@@ -230,16 +240,25 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   String getSubject(int index) {
+    if (index == -1) {
+      return 'Kosong';
+    }
     return appointments[index]['judul'];
   }
 
   @override
   Color getColor(int index) {
+    if (index == -1) {
+      return Colors.yellow;
+    }
     return Color(appointments[index]['warna']);
   }
 
   @override
   bool isAllDay(int index) {
+    if (index == -1) {
+      return false;
+    }
     return appointments[index]['seharian'] ||
         appointments[index]['tanggal_selesai'] == null;
   }

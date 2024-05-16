@@ -128,7 +128,7 @@ class ClassroomsPage extends StatelessWidget {
               borderRadius: BorderRadius.all(
                 Radius.circular(16),
               ),
-            ),
+            ),  
         activeIcon: Icons.close,
         childrenButtonSize: const Size.square(48),
         spaceBetweenChildren: 16,
