@@ -8,18 +8,22 @@ import 'package:syncfusion_flutter_calendar/calendar.dart';
 class AddEventPage extends StatefulWidget {
   const AddEventPage({
     super.key,
-    required this.initialDate,
+    this.initialAppointmentData,
+    this.initialDate,
     required this.initialType,
-    required this.onEventAdded,
+    this.onEventAdded,
+    this.onEventUpdated,
   });
 
-  final DateTime initialDate;
+  final Map<String, dynamic>? initialAppointmentData;
+  final DateTime? initialDate;
   final String initialType;
   final void Function(
     Appointment appointment,
     Map<String, dynamic> kelas,
     String eventType,
-  ) onEventAdded;
+  )? onEventAdded;
+  final void Function(Appointment appointment)? onEventUpdated;
 
   @override
   State<AddEventPage> createState() => _AddEventPageState();
@@ -46,24 +50,65 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   void initState() {
-    final date = widget.initialDate;
-    final now = DateTime.now();
-    final DateTime newDate;
-    if (date.hour == 0 && date.minute == 0) {
-      newDate = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        now.hour,
+    if (widget.initialAppointmentData == null) {
+      final date = widget.initialDate!;
+      final now = DateTime.now();
+      final DateTime newDate;
+      if (date.hour == 0 && date.minute == 0) {
+        newDate = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          now.hour,
+        );
+      } else {
+        newDate = date;
+      }
+      _selectedAppointment = Appointment(
+        startTime: newDate,
+        endTime: newDate.add(const Duration(minutes: 40)),
+        color: Color(colorPalettes.first.color),
       );
     } else {
-      newDate = date;
+      final event = widget.initialAppointmentData!;
+      final startTime = (event['tanggal_mulai'] as Timestamp).toDate();
+      final endTime = event['tanggal_selesai'] != null
+          ? (event['tanggal_selesai'] as Timestamp).toDate()
+          : startTime.add(const Duration(hours: 1));
+      final notes = event['deskripsi'];
+      final recurrenceId = event['id'];
+      final properties = RecurrenceProperties(startDate: startTime);
+      final recurrenceRule = event['ulangi'] == 'none'
+          ? null
+          : SfCalendar.generateRRule(
+              switch (event['ulangi']) {
+                'harian' => properties..recurrenceType = RecurrenceType.daily,
+                'mingguan' => properties
+                  ..recurrenceType = RecurrenceType.weekly,
+                'bulanan' => properties
+                  ..recurrenceType = RecurrenceType.monthly,
+                'tahunan' => properties..recurrenceType = RecurrenceType.yearly,
+                _ => throw Exception(
+                    'Invalid recurrence type: ${event['ulangi']}'),
+              },
+              startTime,
+              endTime,
+            );
+      final subject = event['judul'];
+      final color = Color(event['warna']);
+      final isAllDay = event['seharian'] || event['tanggal_selesai'] == null;
+
+      _selectedAppointment = Appointment(
+        startTime: startTime,
+        endTime: endTime,
+        notes: notes,
+        recurrenceId: recurrenceId,
+        recurrenceRule: recurrenceRule,
+        subject: subject,
+        color: color,
+        isAllDay: isAllDay,
+      );
     }
-    _selectedAppointment = Appointment(
-      startTime: newDate,
-      endTime: newDate.add(const Duration(minutes: 40)),
-      color: Color(colorPalettes.first.color),
-    );
     _selectedEventType = widget.initialType;
     super.initState();
   }
@@ -93,7 +138,7 @@ class _AddEventPageState extends State<AddEventPage> {
                 );
                 return;
               }
-              widget.onEventAdded(
+              widget.onEventAdded?.call(
                 _selectedAppointment,
                 _selectedKelas!,
                 _selectedEventType,
@@ -106,7 +151,8 @@ class _AddEventPageState extends State<AddEventPage> {
       ),
       body: ListView(
         children: [
-          TextField(
+          TextFormField(
+            initialValue: _selectedAppointment.subject,
             style: textTheme.headlineSmall,
             keyboardType: TextInputType.multiline,
             textInputAction: TextInputAction.newline,
@@ -168,10 +214,21 @@ class _AddEventPageState extends State<AddEventPage> {
 
               final docs = snapshot.data!.docs;
 
-              _selectedKelas ??= {
-                'id': docs.first['id_kelas'],
-                ...docs.first.data(),
-              };
+              if (widget.initialAppointmentData != null) {
+                final idKelas = widget.initialAppointmentData!['id_kelas'];
+
+                _selectedKelas ??= {
+                  'id': idKelas,
+                  ...docs
+                      .firstWhere((doc) => doc.data()['id_kelas'] == idKelas)
+                      .data(),
+                };
+              } else {
+                _selectedKelas ??= {
+                  'id': docs.first['id_kelas'],
+                  ...docs.first.data(),
+                };
+              }
 
               return ListTile(
                 title: Text(_selectedKelas!['nama_kelas']),
@@ -209,7 +266,8 @@ class _AddEventPageState extends State<AddEventPage> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: TextField(
+            child: TextFormField(
+              initialValue: _selectedAppointment.notes,
               keyboardType: TextInputType.multiline,
               textInputAction: TextInputAction.newline,
               maxLines: null,

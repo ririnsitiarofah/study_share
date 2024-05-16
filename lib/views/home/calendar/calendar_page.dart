@@ -201,10 +201,7 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   String? getNotes(int index) {
-    if (appointments[index]['deskripsi'] != null) {
-      return appointments[index]['deskripsi'];
-    }
-    return null;
+    return appointments[index]['deskripsi'];
   }
 
   @override

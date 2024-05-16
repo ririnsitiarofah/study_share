@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:studyshare/views/home/calendar/add_event_page.dart';
 
 class EventDetailPage extends StatefulWidget {
   const EventDetailPage({
@@ -19,6 +20,8 @@ class EventDetailPage extends StatefulWidget {
 class _EventDetailPageState extends State<EventDetailPage> {
   late final Future<DocumentSnapshot<Map<String, dynamic>>> _getEvent;
 
+  Map<String, dynamic>? _event;
+
   @override
   void initState() {
     _getEvent = FirebaseFirestore.instance
@@ -36,7 +39,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {},
+            onPressed: _editEvent,
           ),
           IconButton(
             icon: const Icon(Icons.delete),
@@ -59,7 +62,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             );
           }
 
-          final data = snapshot.data!.data()!;
+          final event = _event = snapshot.data!.data()!;
 
           return ListView(
             children: [
@@ -69,7 +72,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   height: 16,
                   margin: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Color(data['warna']),
+                    color: Color(event['warna']),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -78,36 +81,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      data['judul'],
+                      event['judul'],
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     Text(
-                      _formatRangeDate(data['tanggal_mulai'], null),
+                      _formatRangeDate(event['tanggal_mulai'], null),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
                 ),
               ),
-              if (data['deskripsi'] != null)
+              if (event['deskripsi'] != null)
                 ListTile(
                   leading: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Icon(Icons.notes),
                   ),
                   titleAlignment: ListTileTitleAlignment.top,
-                  title: Text(data['deskripsi']),
+                  title: Text(event['deskripsi']),
                 ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Dibuat oleh'),
-                subtitle: Text(data['nama_pemilik']),
+                subtitle: Text(event['nama_pemilik']),
                 onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_today),
                 title: const Text('Dibuat pada'),
-                subtitle: Text(_formatDate(data['tanggal_dibuat'])),
+                subtitle: Text(_formatDate(event['tanggal_dibuat'])),
               ),
             ],
           );
@@ -179,6 +182,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         );
       },
+    );
+  }
+
+  void _editEvent() {
+    final event = _event!;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return AddEventPage(
+            initialType: event['tipe'],
+            initialAppointmentData: event,
+          );
+        },
+        fullscreenDialog: true,
+      ),
     );
   }
 }
