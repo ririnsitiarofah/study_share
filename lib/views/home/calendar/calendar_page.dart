@@ -68,6 +68,13 @@ class _CalendarPageState extends State<CalendarPage> {
                 MaterialPageRoute(
                   builder: (context) => EventDetailPage(
                     idTugas: calendarTapDetails.appointments!.first['id'],
+                    onDeleted: () {
+                      _events.appointments.removeWhere((element) =>
+                          element['id'] ==
+                          calendarTapDetails.appointments!.first['id']);
+                      _events.notifyListeners(CalendarDataSourceAction.remove,
+                          [calendarTapDetails.appointments!.first]);
+                    },
                   ),
                 ),
               );
