@@ -147,16 +147,13 @@ class _CalendarPageState extends State<CalendarPage> {
 
               Navigator.pop(context);
 
-              _events.appointments.add({
+              final event = {
                 'id': doc.id,
                 ...eventMap,
-              });
-              _events.notifyListeners(CalendarDataSourceAction.add, [
-                {
-                  'id': doc.id,
-                  ...eventMap,
-                }
-              ]);
+              };
+
+              _events.appointments.add(event);
+              _events.notifyListeners(CalendarDataSourceAction.add, [event]);
             } catch (e, stackTrace) {
               log(e.toString(), error: e, stackTrace: stackTrace);
               ScaffoldMessenger.of(context).showSnackBar(
