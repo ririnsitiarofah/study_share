@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:studyshare/views/home/calendar/add_event_page.dart';
 import 'package:studyshare/views/home/calendar/event_detail_page.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -29,11 +31,78 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: SafeArea(
         child: SfCalendar(
           controller: _calendarController,
           dataSource: _events,
+          appointmentBuilder: (context, calendarAppointmentDetails) {
+            final event = calendarAppointmentDetails.appointments.first;
+            final brightness =
+                ThemeData.estimateBrightnessForColor(Color(event['warna']));
+
+            return ValueListenableBuilder(
+              valueListenable: Hive.box('acaraSelesaiBox').listenable(),
+              builder: (context, value, child) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Color(event['warna']),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Row(
+                            children: [
+                              if (value.containsKey(event['id'])) ...[
+                                Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: brightness == Brightness.light
+                                      ? Colors.black
+                                      : Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Flexible(
+                                child: Text(
+                                  event['judul'],
+                                  style: (event['tipe'] == 'acara'
+                                          ? textTheme.bodyMedium
+                                          : textTheme.bodySmall)
+                                      ?.copyWith(
+                                    color: brightness == Brightness.light
+                                        ? Colors.black
+                                        : Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (event['tipe'] == 'acara' && !event['seharian'])
+                          Text(
+                            _formatRangeDate(event['tanggal_mulai'], null),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: brightness == Brightness.light
+                                  ? Colors.grey.shade700
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
           loadMoreWidgetBuilder: (context, loadMoreAppointments) {
             return FutureBuilder(
               future: loadMoreAppointments(),
@@ -55,10 +124,10 @@ class _CalendarPageState extends State<CalendarPage> {
             showAgenda: true,
           ),
           allowedViews: const [
+            CalendarView.schedule,
             CalendarView.day,
             CalendarView.week,
             CalendarView.month,
-            CalendarView.schedule,
           ],
           onTap: (calendarTapDetails) {
             if (calendarTapDetails.targetElement ==
@@ -155,6 +224,18 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
       ),
     );
+  }
+
+  String _formatRangeDate(Timestamp startDate, Timestamp? endDate) {
+    if (endDate == null) {
+      return DateFormat('HH:mm').format(startDate.toDate());
+    } else if (startDate.toDate().day == endDate.toDate().day) {
+      return DateFormat('HH:mm -').format(startDate.toDate()).replaceFirst(
+          '-', '- ${DateFormat('HH:mm').format(endDate.toDate())}');
+    } else {
+      return DateFormat('HH:mm -').format(startDate.toDate()).replaceFirst(
+          '-', '- ${DateFormat('HH:mm').format(endDate.toDate())}');
+    }
   }
 }
 
