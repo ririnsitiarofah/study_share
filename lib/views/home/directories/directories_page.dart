@@ -49,7 +49,7 @@ class DirectoriesPage extends StatelessWidget {
             .collection('direktori')
             .where('tipe', isEqualTo: 'folder')
             .where('id_parent', isEqualTo: idDirektori)
-            .where('id_kelas', isEqualTo: null)
+            .where('id_kelas', isNull: true)
             .where('id_pemilik',
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
             .orderBy('nama');
@@ -65,7 +65,7 @@ class DirectoriesPage extends StatelessWidget {
             .collection('direktori')
             .where('tipe', isEqualTo: 'postingan')
             .where('id_parent', isEqualTo: idDirektori)
-            .where('id_kelas', isEqualTo: null)
+            .where('id_kelas', isNull: true)
             .where('id_pemilik',
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
             .orderBy('nama');
