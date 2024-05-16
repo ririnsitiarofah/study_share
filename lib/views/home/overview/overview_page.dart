@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:studyshare/views/home/calendar/event_detail_page.dart';
 
@@ -144,101 +145,137 @@ class _OverviewPageState extends State<OverviewPage> {
                                 ),
                               ),
                             ),
-                          Dismissible(
-                            key: ValueKey(doc.id),
-                            direction: DismissDirection.endToStart,
-                            background: const Align(
-                              alignment: Alignment.centerRight,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.check,
-                                      color: Colors.white,
+                          ValueListenableBuilder(
+                            valueListenable:
+                                Hive.box('acaraSelesaiBox').listenable(),
+                            builder: (context, value, child) {
+                              return Dismissible(
+                                key: ValueKey(doc.id),
+                                direction: DismissDirection.endToStart,
+                                background: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          value.containsKey(doc.id)
+                                              ? Icons.close
+                                              : Icons.check,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          value.containsKey(doc.id)
+                                              ? 'Batalkan selesai'
+                                              : 'Tandai selesai',
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Tandai selesai',
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            confirmDismiss: (direction) async {
-                              try {
-                                final user = FirebaseAuth.instance.currentUser!;
-                                await FirebaseFirestore.instance
-                                    .collection('acara')
-                                    .doc(doc.id)
-                                    .collection('ditandai_selesai')
-                                    .doc(user.uid)
-                                    .update({
-                                  'nama': user.displayName,
-                                });
-                                return true;
-                              } catch (e, stackTrace) {
-                                log(e.toString(),
-                                    error: e, stackTrace: stackTrace);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        "Gagal menandai selesai. Silakan coba lagi."),
-                                  ),
-                                );
-                                return false;
-                              }
-                            },
-                            child: Card(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 4),
-                              child: ListTile(
-                                title: Text(doc['judul']),
-                                subtitle: Text(
-                                  doc['deskripsi'] ?? 'Tidak ada deskripsi',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.outline,
-                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
-                                leading: SizedBox(
-                                  width: 24,
-                                  child: Center(
-                                    child: Container(
-                                      width: 16,
-                                      height: 16,
-                                      decoration: BoxDecoration(
-                                        color: Color(doc['warna']),
-                                        borderRadius: const BorderRadius.all(
-                                            Radius.circular(4)),
+                                confirmDismiss: (direction) async {
+                                  try {
+                                    final box =
+                                        await Hive.openBox('acaraSelesaiBox');
+
+                                    if (value.containsKey(doc.id)) {
+                                      await box.delete(doc.id);
+                                    } else {
+                                      await box.put(doc.id, true);
+                                    }
+                                    return false;
+                                  } catch (e, stackTrace) {
+                                    log(e.toString(),
+                                        error: e, stackTrace: stackTrace);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            "Gagal menandai selesai. Silakan coba lagi."),
+                                      ),
+                                    );
+                                    return false;
+                                  }
+                                },
+                                child: Card(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  child: ListTile(
+                                    title: Row(
+                                      children: [
+                                        Flexible(child: Text(doc['judul'])),
+                                        if (value.containsKey(doc.id))
+                                          Container(
+                                            margin:
+                                                const EdgeInsets.only(left: 8),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: colorScheme.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Selesai',
+                                              style: textTheme.labelSmall
+                                                  ?.copyWith(
+                                                color: colorScheme.onPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      doc['deskripsi'] ?? 'Tidak ada deskripsi',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.outline,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    leading: SizedBox(
+                                      width: 24,
+                                      child: Center(
+                                        child: Container(
+                                          width: 16,
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                            color: Color(doc['warna']),
+                                            borderRadius:
+                                                const BorderRadius.all(
+                                                    Radius.circular(4)),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    trailing: SizedBox(
+                                      width: 36,
+                                      child: Center(
+                                        child: Text(
+                                            _formatTime(doc['tanggal_mulai'])),
+                                      ),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EventDetailPage(
+                                          idTugas: doc.id,
+                                        ),
+                                        fullscreenDialog: true,
                                       ),
                                     ),
                                   ),
                                 ),
-                                trailing: SizedBox(
-                                  width: 36,
-                                  child: Center(
-                                    child:
-                                        Text(_formatTime(doc['tanggal_mulai'])),
-                                  ),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EventDetailPage(
-                                      idTugas: doc.id,
-                                    ),
-                                    fullscreenDialog: true,
-                                  ),
-                                ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       );

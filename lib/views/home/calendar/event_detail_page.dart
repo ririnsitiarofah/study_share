@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -48,6 +50,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -92,9 +97,42 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _event!['judul'],
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _event!['judul'],
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable:
+                              Hive.box('acaraSelesaiBox').listenable(),
+                          builder: (context, value, child) {
+                            if (!value.containsKey(widget.idTugas)) {
+                              return const SizedBox();
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.only(left: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Selesai',
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: colorScheme.onPrimary,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     Text(
                       _formatRangeDate(_event!['tanggal_mulai'], null),
@@ -138,14 +176,34 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton(
-              onPressed: () async {
-                final box = await Hive.openBox('acaraSelesaiBox');
-                await box.put(widget.idTugas, true);
+            ValueListenableBuilder(
+              valueListenable: Hive.box('acaraSelesaiBox').listenable(),
+              builder: (context, value, child) {
+                return TextButton(
+                  onPressed: () async {
+                    try {
+                      final box = await Hive.openBox('acaraSelesaiBox');
 
-                Navigator.pop(context);
+                      if (value.containsKey(widget.idTugas)) {
+                        await box.delete(widget.idTugas);
+                      } else {
+                        await box.put(widget.idTugas, true);
+                      }
+                    } catch (e, stackTrace) {
+                      log(e.toString(), error: e, stackTrace: stackTrace);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              "Gagal menandai selesai. Silakan coba lagi."),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(value.containsKey(widget.idTugas)
+                      ? 'Batalkan Selesai'
+                      : 'Tandai Selesai'),
+                );
               },
-              child: const Text('Tandai selesai'),
             )
           ],
         ),
