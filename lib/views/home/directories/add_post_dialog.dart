@@ -37,7 +37,7 @@ class _AddPostDialogState extends State<AddPostDialog> {
 
   final _selectedFiles = <PlatformFile>[];
 
-  var _isDragging = false;
+  final _isDragging = false;
 
   @override
   void initState() {

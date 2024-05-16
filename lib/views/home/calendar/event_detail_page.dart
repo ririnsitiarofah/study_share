@@ -74,23 +74,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ),
               if (data['deskripsi'] != null)
                 ListTile(
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: const Icon(Icons.notes),
+                  leading: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Icon(Icons.notes),
                   ),
                   titleAlignment: ListTileTitleAlignment.top,
                   title: Text(data['deskripsi']),
                 ),
-              Divider(),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.person),
-                title: Text('Dibuat oleh'),
+                title: const Text('Dibuat oleh'),
                 subtitle: Text(data['nama_pemilik']),
                 onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_today),
-                title: Text('Dibuat pada'),
+                title: const Text('Dibuat pada'),
                 subtitle: Text(_formatDate(data['tanggal_dibuat'])),
               ),
             ],
@@ -104,7 +104,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             TextButton(
               onPressed: () {},
-              child: Text('Tandai selesai'),
+              child: const Text('Tandai selesai'),
             )
           ],
         ),

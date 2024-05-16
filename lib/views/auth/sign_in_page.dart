@@ -88,7 +88,7 @@ class _SignInPageState extends State<SignInPage> {
                         ),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          icon: Icon(Icons.lock_rounded),
+                          icon: const Icon(Icons.lock_rounded),
                           suffixIcon: IconButton(
                             onPressed: () {
                               setState(() {

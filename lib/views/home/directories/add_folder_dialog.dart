@@ -68,8 +68,7 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                 return;
               }
               try {
-                if (!_formKey.currentState!.validate() ||
-                    _selectedColor == null) {
+                if (!_formKey.currentState!.validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Isi semua kolom'),
