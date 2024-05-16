@@ -27,12 +27,12 @@ class _OverviewPageState extends State<OverviewPage> {
     return kelasIds;
   }();
 
-  final _tasks = <Map<String, dynamic>>[];
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    final tasks = <Map<String, dynamic>>[];
 
     return Scaffold(
       body: FutureBuilder(
@@ -123,12 +123,12 @@ class _OverviewPageState extends State<OverviewPage> {
 
                       final doc = snapshot.docs[index];
 
-                      final isFirst = _tasks.isEmpty;
+                      final isFirst = tasks.isEmpty;
                       final isDifferentDate = isFirst ||
-                          _formatDate(_tasks.last['tanggal_mulai']) !=
+                          _formatDate(tasks.last['tanggal_mulai']) !=
                               _formatDate(doc['tanggal_mulai']);
 
-                      _tasks.add(doc.data());
+                      tasks.add(doc.data());
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -202,6 +202,20 @@ class _OverviewPageState extends State<OverviewPage> {
                                   style: textTheme.bodyMedium?.copyWith(
                                     color: colorScheme.outline,
                                     fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                leading: SizedBox(
+                                  width: 24,
+                                  child: Center(
+                                    child: Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: Color(doc['warna']),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(4)),
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 trailing: SizedBox(
