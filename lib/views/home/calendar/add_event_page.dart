@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +20,8 @@ class AddEventPage extends StatefulWidget {
   final Map<String, dynamic>? initialAppointmentData;
   final DateTime? initialDate;
   final String initialType;
-  final void Function(
-    Appointment appointment,
-    Map<String, dynamic> kelas,
-    String eventType,
-  )? onEventAdded;
-  final void Function(Appointment appointment)? onEventUpdated;
+  final void Function(Map<String, dynamic> eventData)? onEventAdded;
+  final void Function(Map<String, dynamic> eventData)? onEventUpdated;
 
   @override
   State<AddEventPage> createState() => _AddEventPageState();
@@ -121,7 +119,7 @@ class _AddEventPageState extends State<AddEventPage> {
       appBar: AppBar(
         actions: [
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               if (_selectedKelas == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -138,11 +136,12 @@ class _AddEventPageState extends State<AddEventPage> {
                 );
                 return;
               }
-              widget.onEventAdded?.call(
-                _selectedAppointment,
-                _selectedKelas!,
-                _selectedEventType,
-              );
+
+              if (widget.initialAppointmentData != null) {
+                await _updateEvent();
+              } else {
+                await _addEvent();
+              }
             },
             child: const Text('Simpan'),
           ),
@@ -623,5 +622,84 @@ class _AddEventPageState extends State<AddEventPage> {
 
   String formatTime(DateTime date) {
     return DateFormat.Hm('ID').format(date);
+  }
+
+  Future<void> _addEvent() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      final eventMap = _generateEventMap(user);
+
+      final doc =
+          await FirebaseFirestore.instance.collection('acara').add(eventMap);
+
+      Navigator.pop(context);
+
+      widget.onEventAdded?.call({
+        'id': doc.id,
+        ...eventMap,
+      });
+    } catch (e, stackTrace) {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Gagal menambahkan acara, silahkan coba lagi!"),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateEvent() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      final eventMap = _generateEventMap(user)..remove('tanggal_dibuat');
+
+      await FirebaseFirestore.instance
+          .collection('acara')
+          .doc(widget.initialAppointmentData!['id'])
+          .update(eventMap);
+
+      Navigator.pop(context);
+
+      widget.onEventUpdated?.call({
+        'id': widget.initialAppointmentData!['id'],
+        ...eventMap,
+      });
+    } catch (e, stackTrace) {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Gagal menambahkan acara, silahkan coba lagi!"),
+        ),
+      );
+    }
+  }
+
+  Map<String, dynamic> _generateEventMap(User user) {
+    return {
+      'id_pemilik': user.uid,
+      'id_kelas': _selectedKelas!['id'],
+      'judul': _selectedAppointment.subject,
+      'nama_pemilik': user.displayName,
+      'tanggal_mulai': Timestamp.fromDate(_selectedAppointment.startTime),
+      'tanggal_selesai': _selectedEventType == 'acara'
+          ? Timestamp.fromDate(_selectedAppointment.endTime)
+          : null,
+      'ulangi': _selectedAppointment.recurrenceRule == null
+          ? 'none'
+          : switch (SfCalendar.parseRRule(_selectedAppointment.recurrenceRule!,
+                  _selectedAppointment.startTime)
+              .recurrenceType) {
+              RecurrenceType.daily => 'harian',
+              RecurrenceType.weekly => 'mingguan',
+              RecurrenceType.monthly => 'bulanan',
+              RecurrenceType.yearly => 'tahunan',
+            },
+      'seharian': _selectedAppointment.isAllDay,
+      'tipe': _selectedEventType,
+      'warna': _selectedAppointment.color.value,
+      'deskripsi': _selectedAppointment.notes,
+      'terakhir_diubah': Timestamp.now(),
+      'tanggal_dibuat': Timestamp.now(),
+    };
   }
 }

@@ -68,6 +68,26 @@ class _CalendarPageState extends State<CalendarPage> {
                 MaterialPageRoute(
                   builder: (context) => EventDetailPage(
                     idTugas: calendarTapDetails.appointments!.first['id'],
+                    onUpdated: (eventData) {
+                      try {
+                        _events.appointments
+                            .remove(calendarTapDetails.appointments!.first);
+                        _events.appointments.add(eventData);
+
+                        _events.notifyListeners(CalendarDataSourceAction.remove,
+                            [calendarTapDetails.appointments!.first]);
+                        _events.notifyListeners(
+                            CalendarDataSourceAction.add, [eventData]);
+                      } catch (e, stackTrace) {
+                        log(e.toString(), error: e, stackTrace: stackTrace);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                "Gagal menambahkan acara, silahkan coba lagi!"),
+                          ),
+                        );
+                      }
+                    },
                     onDeleted: () {
                       _events.appointments.removeWhere((element) =>
                           element['id'] ==
@@ -118,49 +138,11 @@ class _CalendarPageState extends State<CalendarPage> {
         builder: (context) => AddEventPage(
           initialDate: _calendarController.selectedDate ?? DateTime.now(),
           initialType: type,
-          onEventAdded: (appointment, kelas, eventType) async {
+          onEventAdded: (eventData) async {
             try {
-              final user = FirebaseAuth.instance.currentUser!;
-              final eventMap = {
-                'id_pemilik': user.uid,
-                'id_kelas': kelas['id'],
-                'judul': appointment.subject,
-                'nama_pemilik': user.displayName,
-                'tanggal_mulai': Timestamp.fromDate(appointment.startTime),
-                'tanggal_selesai': eventType == 'acara'
-                    ? Timestamp.fromDate(appointment.endTime)
-                    : null,
-                'ulangi': appointment.recurrenceRule == null
-                    ? 'none'
-                    : switch (SfCalendar.parseRRule(
-                            appointment.recurrenceRule!, appointment.startTime)
-                        .recurrenceType) {
-                        RecurrenceType.daily => 'harian',
-                        RecurrenceType.weekly => 'mingguan',
-                        RecurrenceType.monthly => 'bulanan',
-                        RecurrenceType.yearly => 'tahunan',
-                      },
-                'seharian': appointment.isAllDay,
-                'tipe': eventType,
-                'warna': appointment.color.value,
-                'deskripsi': appointment.notes,
-                'terakhir_diubah': Timestamp.now(),
-                'tanggal_dibuat': Timestamp.now(),
-              };
-
-              final doc = await FirebaseFirestore.instance
-                  .collection('acara')
-                  .add(eventMap);
-
-              Navigator.pop(context);
-
-              final event = {
-                'id': doc.id,
-                ...eventMap,
-              };
-
-              _events.appointments.add(event);
-              _events.notifyListeners(CalendarDataSourceAction.add, [event]);
+              _events.appointments.add(eventData);
+              _events
+                  .notifyListeners(CalendarDataSourceAction.add, [eventData]);
             } catch (e, stackTrace) {
               log(e.toString(), error: e, stackTrace: stackTrace);
               ScaffoldMessenger.of(context).showSnackBar(

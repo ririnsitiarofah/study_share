@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:studyshare/views/home/calendar/add_event_page.dart';
 
@@ -8,28 +9,41 @@ class EventDetailPage extends StatefulWidget {
     super.key,
     required this.idTugas,
     this.onDeleted,
+    this.onUpdated,
   });
 
   final String idTugas;
   final void Function()? onDeleted;
+  final void Function(Map<String, dynamic> eventData)? onUpdated;
 
   @override
   State<EventDetailPage> createState() => _EventDetailPageState();
 }
 
 class _EventDetailPageState extends State<EventDetailPage> {
-  late final Future<DocumentSnapshot<Map<String, dynamic>>> _getEvent;
+  late Future<DocumentSnapshot<Map<String, dynamic>>> _getEvent;
 
   Map<String, dynamic>? _event;
 
   @override
   void initState() {
+    _initialise();
+
+    super.initState();
+  }
+
+  void _initialise() {
     _getEvent = FirebaseFirestore.instance
         .collection('acara')
         .doc(widget.idTugas)
-        .get();
-
-    super.initState();
+        .get()
+        .then((value) {
+      _event = {
+        'id': value.id,
+        ...?value.data(),
+      };
+      return value;
+    });
   }
 
   @override
@@ -62,8 +76,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
             );
           }
 
-          final event = _event = snapshot.data!.data()!;
-
           return ListView(
             children: [
               ListTile(
@@ -72,7 +84,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   height: 16,
                   margin: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Color(event['warna']),
+                    color: Color(_event!['warna']),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -81,36 +93,41 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      event['judul'],
+                      _event!['judul'],
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     Text(
-                      _formatRangeDate(event['tanggal_mulai'], null),
+                      _formatRangeDate(_event!['tanggal_mulai'], null),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
                 ),
               ),
-              if (event['deskripsi'] != null)
+              if (_event!['deskripsi'] != null)
                 ListTile(
                   leading: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Icon(Icons.notes),
                   ),
                   titleAlignment: ListTileTitleAlignment.top,
-                  title: Text(event['deskripsi']),
+                  title: Text(_event!['deskripsi']),
                 ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Dibuat oleh'),
-                subtitle: Text(event['nama_pemilik']),
+                subtitle: Text(_event!['nama_pemilik']),
                 onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_today),
                 title: const Text('Dibuat pada'),
-                subtitle: Text(_formatDate(event['tanggal_dibuat'])),
+                subtitle: Text(_formatDate(_event!['tanggal_dibuat'])),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_calendar),
+                title: const Text('Terakhir diubah'),
+                subtitle: Text(_formatDate(_event!['terakhir_diubah'])),
               ),
             ],
           );
@@ -122,7 +139,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                final box = await Hive.openBox('acaraSelesaiBox');
+                await box.put(widget.idTugas, true);
+
+                Navigator.pop(context);
+              },
               child: const Text('Tandai selesai'),
             )
           ],
@@ -195,6 +217,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           return AddEventPage(
             initialType: event['tipe'],
             initialAppointmentData: event,
+            onEventUpdated: (eventData) {
+              setState(() {
+                _initialise();
+              });
+              widget.onUpdated?.call(eventData);
+            },
           );
         },
         fullscreenDialog: true,
