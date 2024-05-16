@@ -214,7 +214,9 @@ class _EventDataSource extends CalendarDataSource {
 
   @override
   Object? getRecurrenceId(int index) {
-  
+    if (index == -1) {
+      return 'Kosong';
+    }
     return appointments[index]['id'];
   }
 
