@@ -69,20 +69,24 @@ class _AddEventPageState extends State<AddEventPage> {
       );
     } else {
       final event = widget.initialAppointmentData!;
+      final id = event['id'];
       final startTime = (event['tanggal_mulai'] as Timestamp).toDate();
       final endTime = event['tanggal_selesai'] != null
           ? (event['tanggal_selesai'] as Timestamp).toDate()
           : startTime.add(const Duration(hours: 1));
       final notes = event['deskripsi'];
-      final recurrenceId = event['id'];
       final properties = RecurrenceProperties(startDate: startTime);
-      final recurrenceRule = event['ulangi'] == 'none'
+      final recurrenceRule = event['ulangi'] == 'none' ||
+              event['ulangi'] == null
           ? null
           : SfCalendar.generateRRule(
               switch (event['ulangi']) {
                 'harian' => properties..recurrenceType = RecurrenceType.daily,
                 'mingguan' => properties
-                  ..recurrenceType = RecurrenceType.weekly,
+                  ..recurrenceType = RecurrenceType.weekly
+                  ..weekDays = [
+                    WeekDays.friday,
+                  ],
                 'bulanan' => properties
                   ..recurrenceType = RecurrenceType.monthly,
                 'tahunan' => properties..recurrenceType = RecurrenceType.yearly,
@@ -97,10 +101,10 @@ class _AddEventPageState extends State<AddEventPage> {
       final isAllDay = event['seharian'] || event['tanggal_selesai'] == null;
 
       _selectedAppointment = Appointment(
+        id: id,
         startTime: startTime,
         endTime: endTime,
         notes: notes,
-        recurrenceId: recurrenceId,
         recurrenceRule: recurrenceRule,
         subject: subject,
         color: color,
