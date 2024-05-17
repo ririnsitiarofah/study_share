@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:studyshare/views/auth/reset_password_page.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
+import 'package:studyshare/views/home/account/update_email_page.dart';
 import 'package:studyshare/views/home/setting/setting_page.dart';
 
 class AccountPage extends StatelessWidget {
@@ -122,13 +124,27 @@ class AccountPage extends StatelessWidget {
                         title: const Text("Email"),
                         subtitle: Text(user.email ?? "Belum diatur"),
                         trailing: const Icon(Icons.arrow_right),
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UpdateEmailPage(),
+                            ),
+                          );
+                        },
                       ),
                       ListTile(
                         title: const Text('Password'),
                         subtitle: const Text('********'),
                         trailing: const Icon(Icons.arrow_right),
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResetPasswordPage(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

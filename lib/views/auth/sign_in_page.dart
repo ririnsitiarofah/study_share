@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:studyshare/views/auth/reset_password_page.dart';
 import 'package:studyshare/views/auth/sign_up_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
 
@@ -23,6 +24,7 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -49,6 +51,7 @@ class _SignInPageState extends State<SignInPage> {
                       const Text(
                         'Sebelum masuk kelas, masuk dulu pake akun kamu biar datanya bisa dibuka di semua perangkat kamu',
                       ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
                         autocorrect: false,
@@ -101,6 +104,18 @@ class _SignInPageState extends State<SignInPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResetPasswordPage(),
+                            ),
+                          );
+                        },
+                        child: const Text('Lupa password?'),
+                      ),
                       const SizedBox(height: 24),
                       Align(
                         alignment: Alignment.centerRight,
@@ -112,7 +127,15 @@ class _SignInPageState extends State<SignInPage> {
                             elevation: ButtonStyleButton.allOrNull(0),
                           ),
                           onPressed: () async {
-                            if (_formKey.currentState!.validate()) {}
+                            if (!_formKey.currentState!.validate()) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      "Ada yang belum diisi nih, cek lagi yah."),
+                                ),
+                              );
+                              return;
+                            }
                             try {
                               await FirebaseAuth.instance
                                   .signInWithEmailAndPassword(
