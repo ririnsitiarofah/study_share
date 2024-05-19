@@ -4,8 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:intl/intl.dart';
+import 'package:studyshare/views/home/calendar/add_event_page.dart';
 import 'package:studyshare/views/home/calendar/event_detail_page.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
@@ -39,156 +40,199 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return SafeArea(
-      child: SfCalendar(
-        controller: _calendarController,
-        dataSource: _events,
-        // appointmentBuilder: (context, calendarAppointmentDetails) {
-        //   var event = calendarAppointmentDetails.appointments.first;
+    return Scaffold(
+      body: SafeArea(
+        child: SfCalendar(
+          controller: _calendarController,
+          dataSource: _events,
+          // appointmentBuilder: (context, calendarAppointmentDetails) {
+          //   var event = calendarAppointmentDetails.appointments.first;
 
-        //   final brightness =
-        //       ThemeData.estimateBrightnessForColor(Color(event['warna']));
+          //   final brightness =
+          //       ThemeData.estimateBrightnessForColor(Color(event['warna']));
 
-        //   return ValueListenableBuilder(
-        //     valueListenable: Hive.box('acaraSelesaiBox').listenable(),
-        //     builder: (context, value, child) {
-        //       return Container(
-        //         padding: const EdgeInsets.symmetric(horizontal: 8),
-        //         decoration: BoxDecoration(
-        //           color: Color(event['warna']),
-        //           borderRadius: BorderRadius.circular(8),
-        //         ),
-        //         child: Align(
-        //           alignment: Alignment.centerLeft,
-        //           child: Column(
-        //             crossAxisAlignment: CrossAxisAlignment.start,
-        //             mainAxisAlignment: MainAxisAlignment.center,
-        //             children: [
-        //               Flexible(
-        //                 child: Row(
-        //                   children: [
-        //                     if (value.containsKey(event['id'])) ...[
-        //                       Icon(
-        //                         Icons.check,
-        //                         size: 18,
-        //                         color: brightness == Brightness.light
-        //                             ? Colors.black
-        //                             : Colors.white,
-        //                       ),
-        //                       const SizedBox(width: 6),
-        //                     ],
-        //                     Flexible(
-        //                       child: Text(
-        //                         event['judul'],
-        //                         style: (event['tipe'] == 'acara'
-        //                                 ? textTheme.bodyMedium
-        //                                 : textTheme.bodySmall)
-        //                             ?.copyWith(
-        //                           color: brightness == Brightness.light
-        //                               ? Colors.black
-        //                               : Colors.white,
-        //                         ),
-        //                       ),
-        //                     ),
-        //                   ],
-        //                 ),
-        //               ),
-        //               if (event['tipe'] == 'acara' && !event['seharian'])
-        //                 Text(
-        //                   _formatRangeDate(
-        //                       event['tanggal_mulai'], event['tanggal_selesai']),
-        //                   style: textTheme.bodySmall?.copyWith(
-        //                     color: brightness == Brightness.light
-        //                         ? Colors.grey.shade700
-        //                         : Colors.grey.shade300,
-        //                   ),
-        //                 ),
-        //             ],
-        //           ),
-        //         ),
-        //       );
-        //     },
-        //   );
-        // },
-        loadMoreWidgetBuilder: (context, loadMoreAppointments) {
-          return FutureBuilder(
-            future: loadMoreAppointments(),
-            builder: (context, snapShot) {
-              return Container(
-                height: _calendarController.view == CalendarView.schedule
-                    ? 50
-                    : double.infinity,
-                width: double.infinity,
-                alignment: Alignment.center,
-                child: const CircularProgressIndicator(),
-              );
-            },
-          );
-        },
-        view: CalendarView.month,
-        showDatePickerButton: true,
-        monthViewSettings: const MonthViewSettings(
-          showAgenda: true,
-        ),
-        allowedViews: const [
-          CalendarView.schedule,
-          CalendarView.day,
-          CalendarView.week,
-          CalendarView.month,
-        ],
-        onTap: (calendarTapDetails) {
-          if (calendarTapDetails.targetElement == CalendarElement.appointment) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EventDetailPage(
-                  idTugas: calendarTapDetails.appointments!.first['id'],
-                  onUpdated: (eventData) {
-                    try {
-                      _events.appointments
-                          .remove(calendarTapDetails.appointments!.first);
-                      _events.appointments.add(eventData);
+          //   return ValueListenableBuilder(
+          //     valueListenable: Hive.box('acaraSelesaiBox').listenable(),
+          //     builder: (context, value, child) {
+          //       return Container(
+          //         padding: const EdgeInsets.symmetric(horizontal: 8),
+          //         decoration: BoxDecoration(
+          //           color: Color(event['warna']),
+          //           borderRadius: BorderRadius.circular(8),
+          //         ),
+          //         child: Align(
+          //           alignment: Alignment.centerLeft,
+          //           child: Column(
+          //             crossAxisAlignment: CrossAxisAlignment.start,
+          //             mainAxisAlignment: MainAxisAlignment.center,
+          //             children: [
+          //               Flexible(
+          //                 child: Row(
+          //                   children: [
+          //                     if (value.containsKey(event['id'])) ...[
+          //                       Icon(
+          //                         Icons.check,
+          //                         size: 18,
+          //                         color: brightness == Brightness.light
+          //                             ? Colors.black
+          //                             : Colors.white,
+          //                       ),
+          //                       const SizedBox(width: 6),
+          //                     ],
+          //                     Flexible(
+          //                       child: Text(
+          //                         event['judul'],
+          //                         style: (event['tipe'] == 'acara'
+          //                                 ? textTheme.bodyMedium
+          //                                 : textTheme.bodySmall)
+          //                             ?.copyWith(
+          //                           color: brightness == Brightness.light
+          //                               ? Colors.black
+          //                               : Colors.white,
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ),
+          //               if (event['tipe'] == 'acara' && !event['seharian'])
+          //                 Text(
+          //                   _formatRangeDate(
+          //                       event['tanggal_mulai'], event['tanggal_selesai']),
+          //                   style: textTheme.bodySmall?.copyWith(
+          //                     color: brightness == Brightness.light
+          //                         ? Colors.grey.shade700
+          //                         : Colors.grey.shade300,
+          //                   ),
+          //                 ),
+          //             ],
+          //           ),
+          //         ),
+          //       );
+          //     },
+          //   );
+          // },
+          loadMoreWidgetBuilder: (context, loadMoreAppointments) {
+            return FutureBuilder(
+              future: loadMoreAppointments(),
+              builder: (context, snapShot) {
+                return Container(
+                  height: _calendarController.view == CalendarView.schedule
+                      ? 50
+                      : double.infinity,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(),
+                );
+              },
+            );
+          },
+          view: CalendarView.month,
+          showDatePickerButton: true,
+          monthViewSettings: const MonthViewSettings(
+            showAgenda: true,
+          ),
+          allowedViews: const [
+            CalendarView.schedule,
+            CalendarView.day,
+            CalendarView.week,
+            CalendarView.month,
+          ],
+          onTap: (calendarTapDetails) {
+            if (calendarTapDetails.targetElement ==
+                CalendarElement.appointment) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EventDetailPage(
+                    idTugas: calendarTapDetails.appointments!.first['id'],
+                    onUpdated: (eventData) {
+                      try {
+                        _events.appointments
+                            .remove(calendarTapDetails.appointments!.first);
+                        _events.appointments.add(eventData);
 
+                        _events.notifyListeners(CalendarDataSourceAction.remove,
+                            [calendarTapDetails.appointments!.first]);
+                        _events.notifyListeners(
+                            CalendarDataSourceAction.add, [eventData]);
+                      } catch (e, stackTrace) {
+                        log(e.toString(), error: e, stackTrace: stackTrace);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                "Gagal menambahkan acara, silahkan coba lagi!"),
+                          ),
+                        );
+                      }
+                    },
+                    onDeleted: () {
+                      _events.appointments.removeWhere((element) =>
+                          element['id'] ==
+                          calendarTapDetails.appointments!.first['id']);
                       _events.notifyListeners(CalendarDataSourceAction.remove,
                           [calendarTapDetails.appointments!.first]);
-                      _events.notifyListeners(
-                          CalendarDataSourceAction.add, [eventData]);
-                    } catch (e, stackTrace) {
-                      log(e.toString(), error: e, stackTrace: stackTrace);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              "Gagal menambahkan acara, silahkan coba lagi!"),
-                        ),
-                      );
-                    }
-                  },
-                  onDeleted: () {
-                    _events.appointments.removeWhere((element) =>
-                        element['id'] ==
-                        calendarTapDetails.appointments!.first['id']);
-                    _events.notifyListeners(CalendarDataSourceAction.remove,
-                        [calendarTapDetails.appointments!.first]);
-                  },
+                    },
+                  ),
                 ),
+              );
+            }
+          },
+        ),
+      ),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
+        shape: Theme.of(context).floatingActionButtonTheme.shape ??
+            const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(16),
               ),
-            );
-          }
-        },
+            ),
+        activeIcon: Icons.close,
+        childrenButtonSize: const Size.square(48),
+        spaceBetweenChildren: 16,
+        childPadding: const EdgeInsets.all(4),
+        children: [
+          SpeedDialChild(
+            label: ('Acara'),
+            onTap: () => _handleAddEvent(context, 'acara'),
+            child: const Icon(Icons.event),
+          ),
+          SpeedDialChild(
+            label: ("Tugas"),
+            onTap: () => _handleAddEvent(context, 'tugas'),
+            child: const Icon(Icons.task_alt),
+          ),
+        ],
       ),
     );
   }
 
-  String _formatRangeDate(Timestamp startDate, Timestamp? endDate) {
-    if (endDate == null) {
-      return DateFormat('HH:mm').format(startDate.toDate());
-    } else if (startDate.toDate().day == endDate.toDate().day) {
-      return DateFormat('HH:mm -').format(startDate.toDate()).replaceFirst(
-          '-', '- ${DateFormat('HH:mm').format(endDate.toDate())}');
-    } else {
-      return DateFormat('HH:mm -').format(startDate.toDate()).replaceFirst(
-          '-', '- ${DateFormat('HH:mm').format(endDate.toDate())}');
-    }
+  Future<void> _handleAddEvent(BuildContext context, String type) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => AddEventPage(
+          initialDate: _calendarController.selectedDate ?? DateTime.now(),
+          initialType: type,
+          onEventAdded: (eventData) async {
+            try {
+              _events.appointments.add(eventData);
+              _events
+                  .notifyListeners(CalendarDataSourceAction.add, [eventData]);
+            } catch (e, stackTrace) {
+              log(e.toString(), error: e, stackTrace: stackTrace);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Gagal menambahkan acara, silahkan coba lagi!"),
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 }
 
