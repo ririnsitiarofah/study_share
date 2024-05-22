@@ -274,7 +274,7 @@ class _EventDataSource extends CalendarDataSource<Map<String, dynamic>> {
     if (appointments[index]['tanggal_selesai'] != null) {
       return (appointments[index]['tanggal_selesai'] as Timestamp).toDate();
     }
-    return getStartTime(index).add(const Duration(hours: 1));
+    return getStartTime(index);
   }
 
   @override

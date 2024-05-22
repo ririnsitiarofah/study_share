@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -170,10 +169,41 @@ class DirectoriesPage extends StatelessWidget {
                               );
                               break;
                             case 'delete':
-                              await FirebaseFirestore.instance
-                                  .collection('direktori')
-                                  .doc(doc.id)
-                                  .delete();
+                              final shouldDelete = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Hapus Folder'),
+                                    content: const Text(
+                                        'Apakah Anda yakin ingin menghapus folder ini?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context, false);
+                                        },
+                                        child: const Text('Batal'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context, true);
+                                        },
+                                        child: Text(
+                                          'Hapus',
+                                          style: TextStyle(
+                                              color: colorScheme.error),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (shouldDelete == true) {
+                                await FirebaseFirestore.instance
+                                    .collection('direktori')
+                                    .doc(doc.id)
+                                    .delete();
+                              }
                               break;
                           }
                         },
@@ -376,15 +406,34 @@ class DirectoriesPage extends StatelessWidget {
                                   );
                                   break;
                                 case 'delete':
-                                  final storage = FirebaseStorage.instance;
-
-                                  final lampiran =
-                                      data['lampiran'] as Map<String, dynamic>;
-                                  for (final entry in lampiran.entries) {
-                                    await storage
-                                        .refFromURL(entry.value['url'])
-                                        .delete();
-                                  }
+                                  final shouldDelete = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text('Hapus Folder'),
+                                        content: const Text(
+                                            'Apakah Anda yakin ingin menghapus folder ini?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, false);
+                                            },
+                                            child: const Text('Batal'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, true);
+                                            },
+                                            child: Text(
+                                              'Hapus',
+                                              style: TextStyle(
+                                                  color: colorScheme.error),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
 
                                   await FirebaseFirestore.instance
                                       .collection('direktori')
