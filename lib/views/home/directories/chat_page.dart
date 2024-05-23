@@ -181,7 +181,7 @@ class _ChatPageState extends State<ChatPage> {
                             child: Text(
                               'Belum ada pesan',
                               style: TextStyle(
-                                color: colorScheme.onSurface,
+                                color: colorScheme.error,
                               ),
                             ),
                           ),
@@ -191,6 +191,7 @@ class _ChatPageState extends State<ChatPage> {
                       sentMessageBodyTextStyle: textTheme.bodyMedium!.copyWith(
                         color: colorScheme.onPrimaryContainer,
                       ),
+                      inputTextColor: colorScheme.onBackground,
                       receivedMessageBodyTextStyle:
                           textTheme.bodyMedium!.copyWith(
                         color: colorScheme.onSecondaryContainer,
@@ -200,7 +201,7 @@ class _ChatPageState extends State<ChatPage> {
                       inputPadding: const EdgeInsets.fromLTRB(16, 12, 0, 12),
                       inputMargin: const EdgeInsets.all(8),
                       inputBackgroundColor: colorScheme.surface,
-                      inputSurfaceTintColor: colorScheme.surfaceTint,
+                      inputSurfaceTintColor: colorScheme.inversePrimary,
                       primaryColor: colorScheme.primaryContainer,
                       secondaryColor: colorScheme.secondaryContainer,
                       errorColor: colorScheme.error,

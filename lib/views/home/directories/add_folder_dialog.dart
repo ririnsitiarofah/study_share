@@ -64,9 +64,6 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              if (widget.existingFolderId != null) {
-                return;
-              }
               try {
                 if (!_formKey.currentState!.validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -76,8 +73,29 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                   );
                   return;
                 }
-                final user = FirebaseAuth.instance.currentUser!;
 
+                // EDIT FOLDER
+                if (widget.existingFolderId != null) {
+                  FirebaseFirestore.instance
+                      .collection('direktori')
+                      .doc(widget.existingFolderId)
+                      .update(
+                    {
+                      'nama': _nameController.text,
+                      'deskripsi': _descriptionController.text.isEmpty
+                          ? null
+                          : _descriptionController.text,
+                      'warna': _selectedColor,
+                      'terakhir_dimodifikasi': FieldValue.serverTimestamp(),
+                    },
+                  );
+                  Navigator.pop(context);
+                  return;
+                }
+
+                // BUAT FOLDER
+
+                final user = FirebaseAuth.instance.currentUser!;
                 FirebaseFirestore.instance.collection('direktori').add(
                   {
                     'id_parent': widget.idParent,
