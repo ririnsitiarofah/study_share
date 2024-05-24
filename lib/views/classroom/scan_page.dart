@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:studyshare/views/classroom/join_after_scan_page.dart';
 
 class ScanPage extends StatelessWidget {
   ScanPage({super.key});
@@ -57,8 +59,40 @@ class ScanPage extends StatelessWidget {
       ),
       body: MobileScanner(
         controller: _cameraController,
-        onDetect: (barcodeCapture) {
-          print(barcodeCapture.raw);
+        onDetect: (barcodeCapture) async {
+          final kodeKelas = barcodeCapture.barcodes.first.displayValue!;
+          if (kodeKelas.length != 9) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Kode kelas kamu enggak valid eyyy!"),
+              ),
+            );
+            return;
+          }
+          await _cameraController.stop();
+
+          final count = await FirebaseFirestore.instance
+              .collection('kelas')
+              .where('kode_kelas', isEqualTo: kodeKelas)
+              .count()
+              .get();
+
+          if ((count.count ?? -1) < 1) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Kode kelas kamu enggak valid eyyy!"),
+              ),
+            );
+
+            await _cameraController.start();
+            return;
+          }
+
+          Navigator.pushReplacement(context, MaterialPageRoute(
+            builder: (context) {
+              return JoinAfterScanPage(kodeKelas: kodeKelas);
+            },
+          ));
         },
       ),
     );

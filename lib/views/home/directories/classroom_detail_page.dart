@@ -117,8 +117,16 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
                               builder: (context) {
                                 return AlertDialog(
                                   title: const Text('QR Code'),
-                                  content: Image.network(
-                                    'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data['kode_kelas']}',
+                                  content: Container(
+                                    margin: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    child: Image.network(
+                                      'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data['kode_kelas']}',
+                                    ),
                                   ),
                                   actions: [
                                     OutlinedButton(
