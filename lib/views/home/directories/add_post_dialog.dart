@@ -67,9 +67,6 @@ class _AddPostDialogState extends State<AddPostDialog> {
         actions: [
           ElevatedButton(
             onPressed: () async {
-              if (widget.existingPostId != null) {
-                return;
-              }
               try {
                 if (!_formKey.currentState!.validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +76,25 @@ class _AddPostDialogState extends State<AddPostDialog> {
                   );
                   return;
                 }
+                // EDIT POST
+                if (widget.existingPostId != null) {
+                  await FirebaseFirestore.instance
+                      .collection('direktori')
+                      .doc(widget.existingPostId)
+                      .update(
+                    {
+                      'nama': _titleController.text,
+                      'deskripsi': _descriptionController.text.isEmpty
+                          ? null
+                          : _descriptionController.text,
+                      'terakhir_dimodifikasi': FieldValue.serverTimestamp(),
+                    },
+                  );
+                  Navigator.pop(context);
+                  return;
+                }
+
+                // ADD POST
                 final ref = FirebaseStorage.instance.ref('berkas_kelas');
                 final lampirans = <String, dynamic>{};
 

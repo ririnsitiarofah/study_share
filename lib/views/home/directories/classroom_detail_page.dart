@@ -4,20 +4,30 @@ import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
+import 'package:studyshare/views/home/directories/edit_classroom_description_page.dart';
 
-class ClassroomDetailPage extends StatelessWidget {
+import 'edit_classroom_name_page.dart';
+
+class ClassroomDetailPage extends StatefulWidget {
   const ClassroomDetailPage({super.key, required this.idKelas});
 
   final String idKelas;
 
+  @override
+  State<ClassroomDetailPage> createState() => _ClassroomDetailPageState();
+}
+
+class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: FutureBuilder(
-        future:
-            FirebaseFirestore.instance.collection("kelas").doc(idKelas).get(),
+        future: FirebaseFirestore.instance
+            .collection("kelas")
+            .doc(widget.idKelas)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(
@@ -39,10 +49,37 @@ class ClassroomDetailPage extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar.large(
-                title: Text(data['nama']),
+                title: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return EditClassroomNamePage(
+                            idKelas: widget.idKelas,
+                            namaKelas: data['nama'],
+                          );
+                        },
+                      ),
+                    );
+
+                    if (result != null) {
+                      setState(() {});
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      Flexible(child: Text(data['nama'])),
+                      const SizedBox(width: 10),
+                      const Icon(Icons.edit, size: 20),
+                    ],
+                  ),
+                ),
               ),
               SliverToBoxAdapter(
                 child: Card(
+                  clipBehavior: Clip.antiAlias,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
@@ -51,6 +88,23 @@ class ClassroomDetailPage extends StatelessWidget {
                         title: const Text('Deskripsi'),
                         subtitle:
                             Text(data['deskripsi'] ?? 'Tidak ada deskripsi'),
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return EditClassroomDescPage(
+                                  idKelas: widget.idKelas,
+                                  descKelas: data['deskripsi'],
+                                );
+                              },
+                            ),
+                          );
+
+                          if (result != null) {
+                            setState(() {});
+                          }
+                        },
                       ),
                       ListTile(
                         title: const Text('Kode Kelas'),
@@ -117,7 +171,8 @@ class ClassroomDetailPage extends StatelessWidget {
                                     onPressed: () async {
                                       await FirebaseFirestore.instance
                                           .collection('member_kelas')
-                                          .where('id_kelas', isEqualTo: idKelas)
+                                          .where('id_kelas',
+                                              isEqualTo: widget.idKelas)
                                           .where('id_user', isEqualTo: user.uid)
                                           .get()
                                           .then((snapshot) {
@@ -173,7 +228,7 @@ class ClassroomDetailPage extends StatelessWidget {
               FirestoreQueryBuilder(
                 query: FirebaseFirestore.instance
                     .collection('member_kelas')
-                    .where('id_kelas', isEqualTo: idKelas),
+                    .where('id_kelas', isEqualTo: widget.idKelas),
                 builder: (context, snapshot, child) {
                   if (snapshot.isFetching) {
                     return const SliverToBoxAdapter(
