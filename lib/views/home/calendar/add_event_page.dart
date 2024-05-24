@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/core/utils/colors.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
@@ -146,6 +147,8 @@ class _AddEventPageState extends State<AddEventPage> {
               } else {
                 await _addEvent();
               }
+
+              await saveNotifications(context);
             },
             child: const Text('Simpan'),
           ),

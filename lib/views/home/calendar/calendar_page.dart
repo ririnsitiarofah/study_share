@@ -41,6 +41,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: SfCalendar(
           controller: _calendarController,
@@ -373,6 +374,12 @@ class _EventDataSource extends CalendarDataSource<Map<String, dynamic>> {
       final kelasIds = snapshotMember.docs
           .map((e) => e.data()['id_kelas'] as String)
           .toList();
+
+      if (kelasIds.isEmpty) {
+        appointments.addAll(meetings);
+        notifyListeners(CalendarDataSourceAction.add, meetings);
+        return;
+      }
 
       final snapshotAcara = await FirebaseFirestore.instance
           .collection('acara')

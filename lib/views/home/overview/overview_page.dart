@@ -61,228 +61,253 @@ class _OverviewPageState extends State<OverviewPage> {
               const SliverAppBar.large(
                 title: Text("Beranda"),
               ),
-              FirestoreQueryBuilder(
-                query: FirebaseFirestore.instance
-                    .collection('acara')
-                    .where('id_kelas', whereIn: kelasIds)
-                    .where('tipe', isEqualTo: 'tugas')
-                    .where(
-                      'tanggal_mulai',
-                      isGreaterThanOrEqualTo: DateTime.now(),
-                    )
-                    .where(
-                      'tanggal_mulai',
-                      isLessThanOrEqualTo:
-                          DateTime.now().add(const Duration(days: 14)),
-                    )
-                    .orderBy('tanggal_mulai'),
-                builder: (context, snapshot, child) {
-                  if (snapshot.isFetching) {
-                    return const SliverToBoxAdapter(
-                      child: Center(
-                        child: CircularProgressIndicator(),
+              if (kelasIds.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.task_alt,
+                        size: 48,
                       ),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return SliverToBoxAdapter(
-                      child: Center(
-                        child: Text('Something went wrong! ${snapshot.error}'),
+                      SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          "Tidak ada tugas yang akan datang.",
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                    );
-                  }
+                    ],
+                  ),
+                )
+              else
+                FirestoreQueryBuilder(
+                  query: FirebaseFirestore.instance
+                      .collection('acara')
+                      .where('id_kelas', whereIn: kelasIds)
+                      .where('tipe', isEqualTo: 'tugas')
+                      .where(
+                        'tanggal_mulai',
+                        isGreaterThanOrEqualTo: DateTime.now(),
+                      )
+                      .where(
+                        'tanggal_mulai',
+                        isLessThanOrEqualTo:
+                            DateTime.now().add(const Duration(days: 14)),
+                      )
+                      .orderBy('tanggal_mulai'),
+                  builder: (context, snapshot, child) {
+                    if (snapshot.isFetching) {
+                      return const SliverToBoxAdapter(
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
 
-                  if (snapshot.docs.isEmpty) {
-                    return const SliverToBoxAdapter(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.task_alt,
-                            size: 48,
-                          ),
-                          SizedBox(height: 8),
-                          Center(
-                            child: Text(
-                              "Tidak ada tugas yang akan datang.",
-                              textAlign: TextAlign.center,
+                    if (snapshot.hasError) {
+                      return SliverToBoxAdapter(
+                        child: Center(
+                          child:
+                              Text('Something went wrong! ${snapshot.error}'),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.docs.isEmpty) {
+                      return const SliverToBoxAdapter(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.task_alt,
+                              size: 48,
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return SliverList.builder(
-                    itemCount: snapshot.docs.length,
-                    itemBuilder: (context, index) {
-                      if (snapshot.hasMore &&
-                          index + 1 == snapshot.docs.length) {
-                        snapshot.fetchMore();
-                      }
-
-                      final doc = snapshot.docs[index];
-
-                      final isFirst = tasks.isEmpty;
-                      final isDifferentDate = isFirst ||
-                          _formatDate(tasks.last['tanggal_mulai']) !=
-                              _formatDate(doc['tanggal_mulai']);
-
-                      tasks.add(doc.data());
-
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (isDifferentDate)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                            SizedBox(height: 8),
+                            Center(
                               child: Text(
-                                _formatDate(doc['tanggal_mulai']),
-                                style: textTheme.labelMedium?.copyWith(
-                                  color: colorScheme.primary,
-                                ),
+                                "Tidak ada tugas yang akan datang.",
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                          ValueListenableBuilder(
-                            valueListenable:
-                                Hive.box('acaraSelesaiBox').listenable(),
-                            builder: (context, value, child) {
-                              return Dismissible(
-                                key: ValueKey(doc.id),
-                                direction: DismissDirection.endToStart,
-                                background: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          value.containsKey(doc.id)
-                                              ? Icons.close
-                                              : Icons.check,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          value.containsKey(doc.id)
-                                              ? 'Batalkan selesai'
-                                              : 'Tandai selesai',
-                                        ),
-                                      ],
-                                    ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return SliverList.builder(
+                      itemCount: snapshot.docs.length,
+                      itemBuilder: (context, index) {
+                        if (snapshot.hasMore &&
+                            index + 1 == snapshot.docs.length) {
+                          snapshot.fetchMore();
+                        }
+
+                        final doc = snapshot.docs[index];
+
+                        final isFirst = tasks.isEmpty;
+                        final isDifferentDate = isFirst ||
+                            _formatDate(tasks.last['tanggal_mulai']) !=
+                                _formatDate(doc['tanggal_mulai']);
+
+                        tasks.add(doc.data());
+
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isDifferentDate)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                                child: Text(
+                                  _formatDate(doc['tanggal_mulai']),
+                                  style: textTheme.labelMedium?.copyWith(
+                                    color: colorScheme.primary,
                                   ),
                                 ),
-                                confirmDismiss: (direction) async {
-                                  try {
-                                    final box =
-                                        await Hive.openBox('acaraSelesaiBox');
-
-                                    if (value.containsKey(doc.id)) {
-                                      await box.delete(doc.id);
-                                    } else {
-                                      await box.put(doc.id, true);
-                                    }
-                                    return false;
-                                  } catch (e, stackTrace) {
-                                    log(e.toString(),
-                                        error: e, stackTrace: stackTrace);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            "Gagal menandai selesai. Silakan coba lagi."),
+                              ),
+                            ValueListenableBuilder(
+                              valueListenable:
+                                  Hive.box('acaraSelesaiBox').listenable(),
+                              builder: (context, value, child) {
+                                return Dismissible(
+                                  key: ValueKey(doc.id),
+                                  direction: DismissDirection.endToStart,
+                                  background: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            value.containsKey(doc.id)
+                                                ? Icons.close
+                                                : Icons.check,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            value.containsKey(doc.id)
+                                                ? 'Batalkan selesai'
+                                                : 'Tandai selesai',
+                                          ),
+                                        ],
                                       ),
-                                    );
-                                    return false;
-                                  }
-                                },
-                                child: Card(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
-                                  child: ListTile(
-                                    title: Row(
-                                      children: [
-                                        Flexible(child: Text(doc['judul'])),
-                                        if (value.containsKey(doc.id))
-                                          Container(
-                                            margin:
-                                                const EdgeInsets.only(left: 8),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'Selesai',
-                                              style: textTheme.labelSmall
-                                                  ?.copyWith(
-                                                color: colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                  confirmDismiss: (direction) async {
+                                    try {
+                                      final box =
+                                          await Hive.openBox('acaraSelesaiBox');
+
+                                      if (value.containsKey(doc.id)) {
+                                        await box.delete(doc.id);
+                                      } else {
+                                        await box.put(doc.id, true);
+                                      }
+                                      return false;
+                                    } catch (e, stackTrace) {
+                                      log(e.toString(),
+                                          error: e, stackTrace: stackTrace);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "Gagal menandai selesai. Silakan coba lagi."),
+                                        ),
+                                      );
+                                      return false;
+                                    }
+                                  },
+                                  child: Card(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 4),
+                                    child: ListTile(
+                                      title: Row(
+                                        children: [
+                                          Flexible(child: Text(doc['judul'])),
+                                          if (value.containsKey(doc.id))
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                  left: 8),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: colorScheme.primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                'Selesai',
+                                                style: textTheme.labelSmall
+                                                    ?.copyWith(
+                                                  color: colorScheme.onPrimary,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                      ],
-                                    ),
-                                    subtitle: Text(
-                                      doc['deskripsi'] ?? 'Tidak ada deskripsi',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.bodyMedium?.copyWith(
-                                        color: colorScheme.outline,
-                                        fontStyle: FontStyle.italic,
+                                        ],
                                       ),
-                                    ),
-                                    leading: SizedBox(
-                                      width: 24,
-                                      child: Center(
-                                        child: Container(
-                                          width: 16,
-                                          height: 16,
-                                          decoration: BoxDecoration(
-                                            color: Color(doc['warna']),
-                                            borderRadius:
-                                                const BorderRadius.all(
-                                                    Radius.circular(4)),
+                                      subtitle: Text(
+                                        doc['deskripsi'] ??
+                                            'Tidak ada deskripsi',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.outline,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                      leading: SizedBox(
+                                        width: 24,
+                                        child: Center(
+                                          child: Container(
+                                            width: 16,
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                              color: Color(doc['warna']),
+                                              borderRadius:
+                                                  const BorderRadius.all(
+                                                      Radius.circular(4)),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    trailing: SizedBox(
-                                      width: 36,
-                                      child: Center(
-                                        child: Text(
-                                            _formatTime(doc['tanggal_mulai'])),
-                                      ),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => EventDetailPage(
-                                          idTugas: doc.id,
+                                      trailing: SizedBox(
+                                        width: 36,
+                                        child: Center(
+                                          child: Text(_formatTime(
+                                              doc['tanggal_mulai'])),
                                         ),
-                                        fullscreenDialog: true,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EventDetailPage(
+                                            idTugas: doc.id,
+                                          ),
+                                          fullscreenDialog: true,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               // SliverToBoxAdapter(
               //   child: Card(
               //     margin: const EdgeInsets.all(16),

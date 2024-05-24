@@ -4,6 +4,7 @@ import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/home/directories/edit_classroom_description_page.dart';
 
 import 'edit_classroom_name_page.dart';
@@ -211,6 +212,8 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
 
                                       FirebaseChatCore.instance
                                           .updateRoom(updatedRoom);
+
+                                      await saveNotifications(context);
 
                                       Navigator.popUntil(
                                           context, (route) => route.isFirst);

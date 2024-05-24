@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
 
@@ -163,6 +164,8 @@ class _JoinAfterScanPageState extends State<JoinAfterScanPage> {
                               );
 
                               FirebaseChatCore.instance.updateRoom(updatedRoom);
+
+                              await saveNotifications(context);
 
                               Navigator.pushAndRemoveUntil(
                                 context,
