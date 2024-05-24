@@ -5,9 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:linkfy_text/linkfy_text.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class PostDetailPage extends StatelessWidget {
   const PostDetailPage({super.key, required this.idPost});
@@ -16,6 +19,7 @@ class PostDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -50,11 +54,47 @@ class PostDetailPage extends StatelessWidget {
             ],
             body: ListView(
               padding: const EdgeInsets.all(16),
-              children: [
+              children: <Widget>[
                 if (data['deskripsi'] != null) ...[
-                  Text(
+                  LinkifyText(
                     data['deskripsi'],
-                    style: textTheme.bodyLarge,
+                    maxLines: 6,
+                    overflow: TextOverflow.ellipsis,
+                    linkTypes: LinkType.values,
+                    linkStyle: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.primary,
+                    ),
+                    onTap: (link) async {
+                      try {
+                        switch (link.type) {
+                          case LinkType.url:
+                            if (link.value!.startsWith('http') ||
+                                link.value!.startsWith('https')) {
+                              await launchUrlString(link.value!);
+                            } else {
+                              await launchUrl(Uri.https(link.value!));
+                            }
+                          case LinkType.email:
+                            await launchUrlString('mailto:${link.value!}');
+                          case LinkType.hashTag:
+                            break;
+                          case LinkType.userTag:
+                            break;
+                          case LinkType.phone:
+                            await launchUrlString('tel:${link.value!}');
+                          case null:
+                          // TODO: Handle this case.
+                        }
+                      } catch (e) {
+                        log(e.toString());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text("Gagal membuka link, silahkan coba lagi!"),
+                          ),
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -87,10 +127,16 @@ class PostDetailPage extends StatelessWidget {
                   },
                 ),
                 const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.date_range),
-                  title: const Text("Tanggal dibuat"),
-                  subtitle: Text(_formatDate(data['tanggal_dibuat'])),
+                const SizedBox(height: 8),
+                Text(
+                  () {
+                    if (data['tanggal_dibuat'] !=
+                        data['terakhir_dimodifikasi']) {
+                      return '${_formatDate(data['tanggal_dibuat'])} • diubah ${_formatSimpleDate(data['tanggal_dibuat'], data['terakhir_dimodifikasi'])}';
+                    }
+                    return _formatDate(data['tanggal_dibuat']);
+                  }(),
+                  style: textTheme.bodyLarge,
                 ),
               ],
             ),
@@ -148,6 +194,16 @@ class PostDetailPage extends StatelessWidget {
   }
 
   String _formatDate(Timestamp date) {
-    return DateFormat.yMMMMEEEEd().format(date.toDate());
+    return DateFormat('HH:mm • d MMM y').format(date.toDate());
+  }
+
+  String _formatSimpleDate(Timestamp created, Timestamp updated) {
+    final createdDate = created.toDate();
+    final updatedDate = updated.toDate();
+    if (DateTime(createdDate.year, createdDate.month, createdDate.day) ==
+        DateTime(updatedDate.year, updatedDate.month, updatedDate.day)) {
+      return DateFormat('HH:mm').format(createdDate);
+    }
+    return DateFormat('HH:mm • d MMM y').format(updated.toDate());
   }
 }

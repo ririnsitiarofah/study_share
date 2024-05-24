@@ -549,6 +549,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
+  linkfy_text:
+    dependency: "direct main"
+    description:
+      name: linkfy_text
+      sha256: "20b513c722ea6d236d8831c37b7918c62ac1c59953306a6c160652aabeb8176a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.6"
   linkify:
     dependency: transitive
     description:
@@ -1020,4 +1028,4 @@ packages:
     version: "6.5.0"
 sdks:
   dart: ">=3.3.0 <4.0.0"
-  flutter: ">=3.19.0"
+  flutter: ">=3.19.3"

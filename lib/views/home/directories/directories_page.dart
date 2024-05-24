@@ -7,6 +7,7 @@ import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:linkfy_text/linkfy_text.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
@@ -15,6 +16,8 @@ import 'package:studyshare/views/home/directories/add_post_dialog.dart';
 import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
 import 'package:studyshare/views/home/directories/post_detail_page.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class DirectoriesPage extends StatelessWidget {
   const DirectoriesPage({
@@ -318,21 +321,65 @@ class DirectoriesPage extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: textTheme.titleMedium,
                                   ),
-                                  Text(
-                                    _formatDate(data['terakhir_dimodifikasi']),
-                                    style: textTheme.labelSmall!.copyWith(
-                                      color: colorScheme.outline,
+                                  if (data['terakhir_dimodifikasi'] != null)
+                                    Text(
+                                      _formatDate(
+                                          data['terakhir_dimodifikasi']),
+                                      style: textTheme.labelSmall!.copyWith(
+                                        color: colorScheme.outline,
+                                      ),
                                     ),
-                                  ),
                                   const SizedBox(height: 4),
                                   if (data['deskripsi'] != null &&
                                       (data['deskripsi'] as String)
                                           .isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    Text(
+                                    LinkifyText(
                                       data['deskripsi'],
                                       maxLines: 6,
                                       overflow: TextOverflow.ellipsis,
+                                      linkTypes: LinkType.values,
+                                      linkStyle: TextStyle(
+                                        color: colorScheme.primary,
+                                      ),
+                                      onTap: (link) async {
+                                        try {
+                                          switch (link.type) {
+                                            case LinkType.url:
+                                              if (link.value!
+                                                      .startsWith('http') ||
+                                                  link.value!
+                                                      .startsWith('https')) {
+                                                await launchUrlString(
+                                                    link.value!);
+                                              } else {
+                                                await launchUrl(
+                                                    Uri.https(link.value!));
+                                              }
+                                            case LinkType.email:
+                                              await launchUrlString(
+                                                  'mailto:${link.value!}');
+                                            case LinkType.hashTag:
+                                              break;
+                                            case LinkType.userTag:
+                                              break;
+                                            case LinkType.phone:
+                                              await launchUrlString(
+                                                  'tel:${link.value!}');
+                                            case null:
+                                            // TODO: Handle this case.
+                                          }
+                                        } catch (e) {
+                                          log(e.toString());
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Gagal membuka link, silahkan coba lagi!"),
+                                            ),
+                                          );
+                                        }
+                                      },
                                     ),
                                   ],
                                   const SizedBox(height: 8),

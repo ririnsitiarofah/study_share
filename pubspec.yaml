@@ -34,6 +34,7 @@ dependencies:
   http: ^1.2.0
   icons_plus: ^5.0.0
   intl: ^0.18.1
+  linkfy_text: ^1.1.6
   mobile_scanner: ^5.1.1
   open_filex: ^4.4.0
   path_provider: ^2.1.2
