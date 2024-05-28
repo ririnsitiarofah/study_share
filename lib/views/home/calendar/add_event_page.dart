@@ -99,7 +99,8 @@ class _AddEventPageState extends State<AddEventPage> {
             );
       final subject = event['judul'];
       final color = Color(event['warna']);
-      final isAllDay = event['seharian'] || event['tanggal_selesai'] == null;
+      final isAllDay = event['seharian'] ||
+          (event['tipe'] == 'acara' && event['tanggal_selesai'] == null);
 
       _selectedAppointment = Appointment(
         id: id,

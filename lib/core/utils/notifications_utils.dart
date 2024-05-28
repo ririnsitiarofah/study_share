@@ -25,7 +25,7 @@ Future<void> saveNotifications(BuildContext context) async {
     final kelasIds =
         snapshotMember.docs.map((e) => e.data()['id_kelas'] as String).toList();
 
-    if (kelasIds.isNotEmpty) {
+    if (kelasIds.isEmpty) {
       return;
     }
 
