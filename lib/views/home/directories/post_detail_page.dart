@@ -9,14 +9,20 @@ import 'package:linkfy_text/linkfy_text.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
+import 'package:studyshare/views/home/directories/add_post_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-class PostDetailPage extends StatelessWidget {
+class PostDetailPage extends StatefulWidget {
   const PostDetailPage({super.key, required this.idPost});
 
   final String idPost;
 
+  @override
+  State<PostDetailPage> createState() => _PostDetailPageState();
+}
+
+class _PostDetailPageState extends State<PostDetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -26,7 +32,7 @@ class PostDetailPage extends StatelessWidget {
       body: FutureBuilder(
         future: FirebaseFirestore.instance
             .collection("direktori")
-            .doc(idPost)
+            .doc(widget.idPost)
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -50,6 +56,80 @@ class PostDetailPage extends StatelessWidget {
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
               SliverAppBar(
                 title: Text(data['nama']),
+                actions: [
+                  PopupMenuButton(
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('Edit'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Hapus'),
+                      ),
+                    ],
+                    onSelected: (value) async {
+                      switch (value) {
+                        case 'edit':
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (context) => AddPostDialog(
+                                idParent: data['id_parent'],
+                                idKelas: data['id_kelas'],
+                                existingPostDesc: data['deskripsi'],
+                                existingPostId: doc.id,
+                                existingPostTitle: data['nama'],
+                              ),
+                            ),
+                          );
+                          if (result) {
+                            setState(() {});
+                          }
+                          break;
+                        case 'delete':
+                          final shouldDelete = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Hapus Postingan'),
+                                content: const Text(
+                                    'Apakah Anda yakin ingin menghapus postingan ini?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, false);
+                                    },
+                                    child: const Text('Batal'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, true);
+                                    },
+                                    child: Text(
+                                      'Hapus',
+                                      style:
+                                          TextStyle(color: colorScheme.error),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (shouldDelete == true) {
+                            await FirebaseFirestore.instance
+                                .collection('direktori')
+                                .doc(doc.id)
+                                .delete();
+                            Navigator.pop(context);
+                          }
+                          break;
+                      }
+                    },
+                  ),
+                ],
               )
             ],
             body: ListView(

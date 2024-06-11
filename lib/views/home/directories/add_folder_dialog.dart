@@ -60,7 +60,12 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            widget.existingFolderId == null ? 'Buat folder' : 'Edit folder'),
+          widget.existingFolderId == null
+              ? widget.idKelas != null
+                  ? 'Buat folder'
+                  : 'Buat personal folder'
+              : 'Edit folder',
+        ),
         actions: [
           ElevatedButton(
             onPressed: () {

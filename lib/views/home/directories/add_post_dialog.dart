@@ -63,7 +63,11 @@ class _AddPostDialogState extends State<AddPostDialog> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingPostId == null ? 'Buat post' : 'Edit post'),
+        title: Text(widget.existingPostId == null
+            ? widget.idKelas != null
+                ? 'Buat post'
+                : 'Buat personal post'
+            : 'Edit post'),
         actions: [
           ElevatedButton(
             onPressed: () async {
@@ -90,7 +94,7 @@ class _AddPostDialogState extends State<AddPostDialog> {
                       'terakhir_dimodifikasi': FieldValue.serverTimestamp(),
                     },
                   );
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                   return;
                 }
 
@@ -132,7 +136,7 @@ class _AddPostDialogState extends State<AddPostDialog> {
                     'terakhir_dimodifikasi': FieldValue.serverTimestamp(),
                   },
                 );
-                Navigator.pop(context);
+                Navigator.pop(context, true);
               } catch (e, stackTrace) {
                 log(e.toString(), error: e, stackTrace: stackTrace);
                 ScaffoldMessenger.of(context).showSnackBar(

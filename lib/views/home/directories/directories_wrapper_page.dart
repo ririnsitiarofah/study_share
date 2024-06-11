@@ -27,8 +27,17 @@ class DirectoriesWrapperPage extends StatefulWidget {
   State<DirectoriesWrapperPage> createState() => _DirectoriesWrapperPageState();
 }
 
-class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
+class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
   var _selectedIndex = 0;
+
+  @override
+  void initState() {
+    _tabController = TabController(length: 2, vsync: this);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +80,9 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
                           fullscreenDialog: true,
                           builder: (context) => AddPostDialog(
                             idParent: widget.idDirektori,
-                            idKelas: widget.idKelas,
+                            idKelas: _tabController.index == 0
+                                ? widget.idKelas
+                                : null,
                           ),
                         ),
                       );
@@ -87,7 +98,9 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
                           fullscreenDialog: true,
                           builder: (context) => AddFolderDialog(
                             idParent: widget.idDirektori,
-                            idKelas: widget.idKelas,
+                            idKelas: _tabController.index == 0
+                                ? widget.idKelas
+                                : null,
                           ),
                         ),
                       );
@@ -124,85 +137,83 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage> {
           ],
         ),
         body: switch (_selectedIndex) {
-          0 => DefaultTabController(
-              length: 2,
-              child: NestedScrollView(
-                headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                  SliverAppBar(
-                    title: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ClassroomDetailPage(idKelas: widget.idKelas),
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: kToolbarHeight,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(widget.namaDirektori ?? widget.namaKelas),
+          0 => NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverAppBar(
+                  title: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ClassroomDetailPage(idKelas: widget.idKelas),
                         ),
+                      );
+                    },
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: kToolbarHeight,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(widget.namaDirektori ?? widget.namaKelas),
                       ),
                     ),
-                    actions: [
-                      PopupMenuButton(
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'info',
-                            child: Text("Info kelas"),
-                          ),
-                        ],
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'info':
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ClassroomDetailPage(
-                                    idKelas: widget.idKelas,
-                                  ),
-                                ),
-                              );
-                              break;
-                          }
-                        },
-                      ),
-                    ],
-                    bottom: TabBar(
-                      onTap: (index) {},
-                      tabs: const [
-                        Tab(
-                          text: ("Kelas"),
-                        ),
-                        Tab(
-                          text: ("Personal"),
+                  ),
+                  actions: [
+                    PopupMenuButton(
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'info',
+                          child: Text("Info kelas"),
                         ),
                       ],
-                    ),
-                  )
-                ],
-                body: TabBarView(
-                  children: [
-                    DirectoriesPage(
-                      isKelas: true,
-                      idKelas: widget.idKelas,
-                      namaKelas: widget.namaKelas,
-                      idDirektori: widget.idDirektori,
-                      namaDirektori: widget.namaDirektori,
-                    ),
-                    DirectoriesPage(
-                      isKelas: false,
-                      idKelas: widget.idKelas,
-                      namaKelas: widget.namaKelas,
-                      idDirektori: widget.idDirektori,
-                      namaDirektori: widget.namaDirektori,
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'info':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ClassroomDetailPage(
+                                  idKelas: widget.idKelas,
+                                ),
+                              ),
+                            );
+                            break;
+                        }
+                      },
                     ),
                   ],
-                ),
+                  bottom: TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(
+                        text: ("Kelas"),
+                      ),
+                      Tab(
+                        text: ("Personal"),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  DirectoriesPage(
+                    isKelas: true,
+                    idKelas: widget.idKelas,
+                    namaKelas: widget.namaKelas,
+                    idDirektori: widget.idDirektori,
+                    namaDirektori: widget.namaDirektori,
+                  ),
+                  DirectoriesPage(
+                    isKelas: false,
+                    idKelas: widget.idKelas,
+                    namaKelas: widget.namaKelas,
+                    idDirektori: widget.idDirektori,
+                    namaDirektori: widget.namaDirektori,
+                  ),
+                ],
               ),
             ),
           1 => TasksPage(
