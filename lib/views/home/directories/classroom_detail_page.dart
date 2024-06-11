@@ -22,6 +22,7 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       body: FutureBuilder(
@@ -117,16 +118,45 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                  title: const Text('QR Code'),
+                                  title: const Text('Scan kode kelas'),
                                   content: Container(
                                     margin: const EdgeInsets.all(16),
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        36, 24, 36, 24),
                                     decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius:
                                             BorderRadius.circular(16)),
-                                    child: Image.network(
-                                      'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data['kode_kelas']}',
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Kode kelas: ' + data['kode_kelas'],
+                                          textAlign: TextAlign.center,
+                                          style: textTheme.titleMedium
+                                              ?.copyWith(color: Colors.black),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Image.network(
+                                          'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data['kode_kelas']}',
+                                          loadingBuilder: (context, child,
+                                              loadingProgress) {
+                                            return loadingProgress == null
+                                                ? child
+                                                : const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  );
+                                          },
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Text(
+                                          'Scan di aplikasi Study Share sekarang!',
+                                          textAlign: TextAlign.center,
+                                          style: textTheme.labelLarge
+                                              ?.copyWith(color: Colors.black),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   actions: [
@@ -290,40 +320,39 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
                       final doc = snapshot.docs[index];
                       final data = doc.data();
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Color(data['color'] ?? 0xffcd3676),
-                            child: const Icon(Icons.person),
-                          ),
-                          trailing: PopupMenuButton(
-                            itemBuilder: (context) => [
-                              if (data['id_user'] != user.uid ||
-                                  (data['id_user'] == user.uid &&
-                                      (data['role'] == 'admin' ||
-                                          data['role'] == 'pemilik')))
-                                const PopupMenuItem(
-                                  value: 'kick',
-                                  child: Text('Kick'),
-                                ),
-                            ],
-                            onSelected: (selectedItem) async {
-                              switch (selectedItem) {
-                                case 'kick':
-                                  await FirebaseFirestore.instance
-                                      .collection('direktori')
-                                      .doc(doc.id)
-                                      .delete();
-                                  break;
-                              }
-                            },
-                          ),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          title: Text(data['nama'] ?? ''),
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Color(data['color'] ?? 0xffcd3676),
+                          child: const Icon(Icons.person),
                         ),
+                        subtitle: Text(data['nim']),
+                        trailing: (data['id_user'] != user.uid ||
+                                (data['id_user'] == user.uid &&
+                                    (data['role'] == 'admin' ||
+                                        data['role'] == 'pemilik')))
+                            ? PopupMenuButton(
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'kick',
+                                    child: Text('Keluarkan'),
+                                  ),
+                                ],
+                                onSelected: (selectedItem) async {
+                                  switch (selectedItem) {
+                                    case 'kick':
+                                      await FirebaseFirestore.instance
+                                          .collection('direktori')
+                                          .doc(doc.id)
+                                          .delete();
+                                      break;
+                                  }
+                                },
+                              )
+                            : null,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        title: Text(data['nama'] ?? ''),
                       );
                     },
                   );
