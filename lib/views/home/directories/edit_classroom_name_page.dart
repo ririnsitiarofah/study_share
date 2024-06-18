@@ -44,7 +44,23 @@ class _EditClassroomNamePageState extends State<EditClassroomNamePage> {
                     .collection('kelas')
                     .doc(widget.idKelas)
                     .update({'nama': _nameController.text});
-                Navigator.pop(context, true);
+
+                final snapshot = await FirebaseFirestore.instance
+                    .collection('member_kelas')
+                    .where('id_kelas', isEqualTo: widget.idKelas)
+                    .get();
+
+                final batch = FirebaseFirestore.instance.batch();
+                final docs = snapshot.docs;
+                final ref =
+                    FirebaseFirestore.instance.collection('member_kelas');
+                for (var i = 0; i < docs.length; i++) {
+                  batch.update(ref.doc(docs[i].id), {
+                    'nama_kelas': _nameController.text,
+                  });
+                }
+                await batch.commit();
+                Navigator.pop(context, _nameController.text);
               }
             },
             child: const Text('Simpan'),

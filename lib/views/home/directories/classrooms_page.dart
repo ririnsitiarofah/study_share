@@ -22,100 +22,156 @@ class ClassroomsPage extends StatelessWidget {
             title: Text("Kelas"),
           )
         ],
-        body: FirestoreListView(
+        body: FirestoreQueryBuilder(
           query: FirebaseFirestore.instance.collection('member_kelas').where(
               'id_user',
               isEqualTo: FirebaseAuth.instance.currentUser!.uid),
-          emptyBuilder: (context) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.school,
-                    size: 100,
-                  ),
-                  const SizedBox(height: 36),
-                  Text(
-                    "Kamu belum bergabung dengan kelas apapun",
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CreateClassroomPage(),
-                            ),
-                          );
-                        },
-                        child: const Text("Buat Kelas"),
-                      ),
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const JoinPage(),
-                            ),
-                          );
-                        },
-                        child: const Text("Join Kelas"),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-          padding: EdgeInsets.zero,
-          itemBuilder: (context, snapshot) {
-            final memberKelas = snapshot.data();
+          builder: (context, snapshot, child) {
+            if (snapshot.isFetching) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-              child: InkWell(
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DirectoriesWrapperPage(
-                        idKelas: memberKelas["id_kelas"],
-                        namaKelas: memberKelas["nama_kelas"],
-                        idDirektori: null,
-                        namaDirektori: null,
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Something went wrong! ${snapshot.error}'),
+              );
+            }
+
+            if (snapshot.docs.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.school,
+                      size: 100,
+                    ),
+                    const SizedBox(height: 36),
+                    Text(
+                      "Kamu belum bergabung dengan kelas apapun",
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
                       ),
                     ),
-                  );
-                },
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Text(
-                            memberKelas["nama_kelas"],
-                            style: textTheme.titleLarge,
-                          ),
-                          Text(
-                            memberKelas["deskripsi"] ?? '',
-                            style: textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateClassroomPage(),
+                              ),
+                            );
+                          },
+                          child: const Text("Buat Kelas"),
+                        ),
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const JoinPage(),
+                              ),
+                            );
+                          },
+                          child: const Text("Join Kelas"),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              );
+            }
+
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisExtent: 140,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: snapshot.docs.length,
+              itemBuilder: (context, index) {
+                if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
+                  snapshot.fetchMore();
+                }
+
+                final memberKelas = snapshot.docs[index].data();
+
+                return Card(
+                  margin: EdgeInsets.zero,
+                  child: InkWell(
+                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DirectoriesWrapperPage(
+                            idKelas: memberKelas["id_kelas"],
+                            namaKelas: memberKelas["nama_kelas"],
+                            idDirektori: null,
+                            namaDirektori: null,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        FutureBuilder(
+                          future: FirebaseFirestore.instance
+                              .collection('member_kelas')
+                              .where('id_kelas',
+                                  isEqualTo: memberKelas['id_kelas'])
+                              .count()
+                              .get(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState !=
+                                    ConnectionState.done ||
+                                snapshot.hasError) {
+                              return const SizedBox();
+                            }
+
+                            final jumlahAnggota = snapshot.data!.count;
+
+                            return Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  '$jumlahAnggota anggota',
+                                  style: textTheme.bodyLarge,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              memberKelas['nama_kelas'],
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleMedium!.copyWith(
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),

@@ -32,9 +32,12 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
   late final TabController _tabController;
 
   var _selectedIndex = 0;
+  late String _namaKelas;
 
   @override
   void initState() {
+    _namaKelas = widget.namaKelas;
+
     _tabController = TabController(length: 2, vsync: this);
     super.initState();
   }
@@ -141,21 +144,26 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverAppBar(
                   title: InkWell(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
                               ClassroomDetailPage(idKelas: widget.idKelas),
                         ),
                       );
+                      if (result != null) {
+                        setState(() {
+                          _namaKelas = result;
+                        });
+                      }
                     },
                     child: SizedBox(
                       width: double.infinity,
                       height: kToolbarHeight,
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(widget.namaDirektori ?? widget.namaKelas),
+                        child: Text(widget.namaDirektori ?? _namaKelas),
                       ),
                     ),
                   ),
