@@ -1,20 +1,48 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/firebase_options.dart';
+import 'package:studyshare/views/home/calendar/event_detail_page.dart';
+import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
 import 'package:studyshare/views/splash/splash_page.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+final navigatorKey = GlobalKey<NavigatorState>();
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  if (message.data['channel'] == 'event') {
+    await Firebase.initializeApp();
+    await saveNotifications();
+  }
+
+  log("Handling a background message: ${message.messageId}");
+}
 
 Future<void> _configureLocalTimeZone() async {
   tz.initializeTimeZones();
   final timeZoneName = await FlutterTimezone.getLocalTimezone();
   tz.setLocalLocation(tz.getLocation(timeZoneName));
+}
+
+void notificationTapForeground(NotificationResponse notificationResponse) {
+  navigatorKey.currentState?.push(MaterialPageRoute(
+    builder: (context) => EventDetailPage(
+      idTugas: notificationResponse.payload!,
+    ),
+  ));
 }
 
 @pragma('vm:entry-point')
@@ -33,6 +61,12 @@ Future<void> main() async {
   await Hive.initFlutter();
   await Hive.openBox('acaraSelesaiBox');
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Local Notification
+
   await _configureLocalTimeZone();
 
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -44,10 +78,7 @@ Future<void> main() async {
 
   await flutterLocalNotificationsPlugin.initialize(
     initializationSettings,
-    onDidReceiveNotificationResponse: (notificationResponse) {
-      log('!===!=====================================================');
-      log(notificationResponse.toString());
-    },
+    onDidReceiveNotificationResponse: notificationTapForeground,
     onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
   );
 
@@ -56,9 +87,79 @@ Future<void> main() async {
     ?..requestNotificationsPermission()
     ..requestExactAlarmsPermission();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  // Firebase Messaging
+
+  final messaging = FirebaseMessaging.instance;
+
+  if (kDebugMode) {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    log(fcmToken.toString());
+  }
+
+  await messaging.subscribeToTopic("acara");
+
+  final settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
   );
+
+  log('User granted permission: ${settings.authorizationStatus}');
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    log('Got a message whilst in the foreground!');
+    log('Message data: ${message.data}');
+
+    final notification = message.notification;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (notification == null) return;
+
+    if (message.data['id_pemilik'] == currentUser?.uid) return;
+
+    if (message.data['channel'] == 'event') {
+      var platformChannelSpecifics = const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'event',
+          'Acara',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      );
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        notification.title,
+        notification.body,
+        platformChannelSpecifics,
+        payload: message.data['id_acara'],
+      );
+    } else if (message.data['channel'] == 'chat') {
+      var platformChannelSpecifics = const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'chat',
+          'Chat',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      );
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        notification.title,
+        notification.body,
+        platformChannelSpecifics,
+        payload: message.data['id_kelas'],
+      );
+    }
+  });
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Chat
+
   FirebaseChatCore.instance.setConfig(
     const FirebaseChatCoreConfig(
       null,
@@ -66,13 +167,67 @@ Future<void> main() async {
       'user',
     ),
   );
-  runApp(const MyApp());
+  runApp(
+    MyApp(
+      onInitialLaunch: (context) async {
+        final initialMessage =
+            await FirebaseMessaging.instance.getInitialMessage();
+
+        if (initialMessage != null) {
+          if (initialMessage.data['channel'] == 'event') {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) {
+                return EventDetailPage(
+                  idTugas: initialMessage.data['id_acara'],
+                );
+              }),
+            );
+            return;
+          } else if (initialMessage.data['channel'] == 'chat') {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) {
+                return DirectoriesWrapperPage(
+                  idKelas: initialMessage.data['id_kelas'],
+                  namaKelas: initialMessage.notification!.title!,
+                  idDirektori: null,
+                  namaDirektori: null,
+                  initialTab: 3,
+                );
+              }),
+            );
+            return;
+          }
+        }
+
+        final notificationAppLaunchDetails =
+            await flutterLocalNotificationsPlugin
+                .getNotificationAppLaunchDetails();
+
+        if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) {
+              return EventDetailPage(
+                idTugas: notificationAppLaunchDetails!
+                    .notificationResponse!.payload!,
+              );
+            }),
+          );
+          return;
+        }
+      },
+    ),
+  );
 }
 
 final ValueNotifier<ThemeMode> notifier = ValueNotifier(ThemeMode.system);
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.onInitialLaunch});
+
+  final void Function(BuildContext context)? onInitialLaunch;
 
   @override
   Widget build(BuildContext context) {
@@ -89,10 +244,13 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           darkTheme: ThemeData.dark(),
+          navigatorKey: navigatorKey,
           home: child,
         );
       },
-      child: const SplashPage(),
+      child: SplashPage(
+        onInitialLaunch: onInitialLaunch,
+      ),
     );
   }
 }

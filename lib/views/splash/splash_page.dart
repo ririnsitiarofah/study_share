@@ -1,11 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({super.key});
+  const SplashPage({super.key, this.onInitialLaunch});
+
+  final void Function(BuildContext context)? onInitialLaunch;
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -18,7 +22,19 @@ class _SplashPageState extends State<SplashPage> {
       await saveNotifications(context);
 
       if (FirebaseAuth.instance.currentUser != null) {
-        Navigator.pushAndRemoveUntil(
+        final memberKelas = await FirebaseFirestore.instance
+            .collection('member_kelas')
+            .where('id_user', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+            .get();
+
+        await Future.wait(
+          memberKelas.docs.map((member) async {
+            await FirebaseMessaging.instance
+                .subscribeToTopic('chat-${member.data()['id_kelas']}');
+          }),
+        );
+
+        await Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (context) {
@@ -27,9 +43,14 @@ class _SplashPageState extends State<SplashPage> {
           ),
           (route) => false,
         );
+
+        if (widget.onInitialLaunch != null) {
+          widget.onInitialLaunch!(context);
+        }
         return;
       }
-      Navigator.pushAndRemoveUntil(
+
+      await Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
           builder: (context) {

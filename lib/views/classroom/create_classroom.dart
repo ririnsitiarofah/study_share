@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
@@ -140,6 +141,8 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                                   ),
                                 ],
                               );
+                              await FirebaseMessaging.instance
+                                  .subscribeToTopic('chat:${docRef.id}');
 
                               Navigator.pushAndRemoveUntil(
                                 context,

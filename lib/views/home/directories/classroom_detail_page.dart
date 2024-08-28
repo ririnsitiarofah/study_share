@@ -20,7 +20,7 @@ class ClassroomDetailPage extends StatefulWidget {
 
 class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
   bool _isUpdated = false;
-  String? _updatedClassName = null;
+  String? _updatedClassName;
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +116,7 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
                               Text(data['deskripsi'] ?? 'Tidak ada deskripsi'),
                           trailing: IconButton(
                             onPressed: () {},
-                            icon: Icon(Icons.edit),
+                            icon: const Icon(Icons.edit),
                           ),
                           onTap: () async {
                             final result = await Navigator.push(
@@ -351,9 +351,9 @@ class _ClassroomDetailPageState extends State<ClassroomDetailPage> {
                         final data = doc.data();
 
                         return ListTile(
-                          leading: CircleAvatar(
+                          leading: const CircleAvatar(
                             backgroundColor: Colors.grey,
-                            child: const Icon(Icons.person),
+                            child: Icon(Icons.person),
                           ),
                           subtitle: Text(data['nim']),
                           trailing: (data['id_user'] != user.uid ||

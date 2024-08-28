@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
@@ -134,18 +135,36 @@ class _JoinPageState extends State<JoinPage> {
                               final user = FirebaseAuth.instance.currentUser!;
                               final doc = classSnapshot.docs.first;
 
-                              final classMemberSnapshot =
+                              final classMemberByIdSnapshot =
                                   await FirebaseFirestore.instance
                                       .collection('member_kelas')
                                       .where('id_user', isEqualTo: user.uid)
                                       .where('id_kelas', isEqualTo: doc.id)
                                       .get();
 
-                              if (classMemberSnapshot.docs.isNotEmpty) {
+                              if (classMemberByIdSnapshot.docs.isNotEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
                                         "Kamu sudah bergabung di kelas ini."),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final classMemberByNimSnapshot =
+                                  await FirebaseFirestore.instance
+                                      .collection('member_kelas')
+                                      .where('nim',
+                                          isEqualTo: _nimController.text)
+                                      .where('id_kelas', isEqualTo: doc.id)
+                                      .get();
+
+                              if (classMemberByNimSnapshot.docs.isNotEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        "NIM kamu sudah terdaftar di kelas ini."),
                                   ),
                                 );
                                 return;
@@ -195,6 +214,8 @@ class _JoinPageState extends State<JoinPage> {
                               );
 
                               FirebaseChatCore.instance.updateRoom(updatedRoom);
+                              await FirebaseMessaging.instance
+                                  .subscribeToTopic('chat:${doc.id}');
 
                               await saveNotifications(context);
 

@@ -6,12 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
+import 'package:timezone/data/latest_all.dart';
 import 'package:timezone/timezone.dart';
 
-Future<void> saveNotifications(BuildContext context) async {
+Future<void> saveNotifications([BuildContext? context]) async {
   try {
+    log('Saving local notifications...');
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
+      if (context == null) return;
+
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => const SignInPage()));
       return;
@@ -83,7 +87,6 @@ Future<void> saveNotifications(BuildContext context) async {
             android: AndroidNotificationDetails(
               'event',
               'Acara',
-              channelDescription: 'your channel description',
               importance: Importance.max,
               priority: Priority.high,
               audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -91,11 +94,17 @@ Future<void> saveNotifications(BuildContext context) async {
           ),
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
+          payload: doc.id,
         );
       }
     }
+
+    log('Local notifications saved!');
   } catch (e, stackTrace) {
     log(e.toString(), error: e, stackTrace: stackTrace);
+
+    if (context == null) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Gagal memuat data. Silakan coba lagi.'),
@@ -109,5 +118,6 @@ String? _formatDate(Timestamp timestamp) {
 }
 
 TZDateTime _parseDate(DateTime date) {
+  initializeTimeZones();
   return TZDateTime.from(date, local);
 }

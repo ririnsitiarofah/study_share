@@ -28,7 +28,7 @@ class ClassroomsPage extends StatelessWidget {
               isEqualTo: FirebaseAuth.instance.currentUser!.uid),
           builder: (context, snapshot, child) {
             if (snapshot.isFetching) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             }

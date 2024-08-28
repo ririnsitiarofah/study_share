@@ -16,12 +16,14 @@ class DirectoriesWrapperPage extends StatefulWidget {
     required this.namaKelas,
     required this.idDirektori,
     required this.namaDirektori,
+    this.initialTab = 0,
   });
 
   final String idKelas;
   final String namaKelas;
   final String? idDirektori;
   final String? namaDirektori;
+  final int initialTab;
 
   @override
   State<DirectoriesWrapperPage> createState() => _DirectoriesWrapperPageState();
@@ -37,6 +39,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
   @override
   void initState() {
     _namaKelas = widget.namaKelas;
+    _selectedIndex = widget.initialTab;
 
     _tabController = TabController(length: 2, vsync: this);
     super.initState();
