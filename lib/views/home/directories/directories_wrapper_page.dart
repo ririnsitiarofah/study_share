@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:studyshare/views/home/calendar/add_event_page.dart';
 import 'package:studyshare/views/home/directories/add_folder_dialog.dart';
 import 'package:studyshare/views/home/directories/add_post_dialog.dart';
 import 'package:studyshare/views/home/directories/chat_page.dart';
@@ -62,60 +63,93 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
         Navigator.pop(context);
       },
       child: Scaffold(
-        floatingActionButton: _selectedIndex == 0
-            ? SpeedDial(
-                heroTag: 'fab',
-                icon: Icons.add,
-                shape: Theme.of(context).floatingActionButtonTheme.shape ??
-                    const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(16),
-                      ),
+        floatingActionButton: switch (_selectedIndex) {
+          0 => SpeedDial(
+              heroTag: 'fab',
+              icon: Icons.add,
+              shape: Theme.of(context).floatingActionButtonTheme.shape ??
+                  const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(16),
                     ),
-                activeIcon: Icons.close,
-                childrenButtonSize: const Size.square(48),
-                spaceBetweenChildren: 16,
-                childPadding: const EdgeInsets.all(4),
-                children: [
-                  SpeedDialChild(
-                    label: ("Buat Postingan"),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => AddPostDialog(
-                            idParent: widget.idDirektori,
-                            idKelas: _tabController.index == 0
-                                ? widget.idKelas
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.post_add_rounded),
                   ),
-                  SpeedDialChild(
-                    label: ('Buat folder'),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => AddFolderDialog(
-                            idParent: widget.idDirektori,
-                            idKelas: _tabController.index == 0
-                                ? widget.idKelas
-                                : null,
-                          ),
+              activeIcon: Icons.close,
+              childrenButtonSize: const Size.square(48),
+              spaceBetweenChildren: 16,
+              childPadding: const EdgeInsets.all(4),
+              children: [
+                SpeedDialChild(
+                  label: ("Buat Postingan"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (context) => AddPostDialog(
+                          idParent: widget.idDirektori,
+                          idKelas:
+                              _tabController.index == 0 ? widget.idKelas : null,
                         ),
-                      );
-                    },
-                    child: const Icon(Icons.create_new_folder),
-                  )
-                ],
-              )
-            : null,
+                      ),
+                    );
+                  },
+                  child: const Icon(Icons.post_add_rounded),
+                ),
+                SpeedDialChild(
+                  label: ('Buat folder'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (context) => AddFolderDialog(
+                          idParent: widget.idDirektori,
+                          idKelas:
+                              _tabController.index == 0 ? widget.idKelas : null,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Icon(Icons.create_new_folder),
+                )
+              ],
+            ),
+          1 => FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (context) => AddEventPage(
+                      initialDate: DateTime.now(),
+                      initialType: 'tugas',
+                      changable: false,
+                      initialIdKelas: widget.idKelas,
+                    ),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
+            ),
+          2 => FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    fullscreenDialog: true,
+                    builder: (context) => AddEventPage(
+                      initialDate: DateTime.now(),
+                      initialType: 'acara',
+                      changable: false,
+                      initialIdKelas: widget.idKelas,
+                    ),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
+            ),
+          _ => null,
+        },
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (value) {

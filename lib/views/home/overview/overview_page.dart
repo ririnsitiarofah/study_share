@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:studyshare/views/home/calendar/event_detail_page.dart';
@@ -61,31 +60,6 @@ class _OverviewPageState extends State<OverviewPage> {
             slivers: [
               SliverAppBar.large(
                 title: Text("Beranda"),
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      final flutterLocalNotificationsPlugin =
-                          FlutterLocalNotificationsPlugin();
-
-                      var platformChannelSpecifics = const NotificationDetails(
-                        android: AndroidNotificationDetails(
-                          'event',
-                          'Acara',
-                          importance: Importance.max,
-                          priority: Priority.high,
-                        ),
-                      );
-                      flutterLocalNotificationsPlugin.show(
-                        0,
-                        "test",
-                        'Testt',
-                        platformChannelSpecifics,
-                        payload: '0yc1pL11Bqun42gNcJSS',
-                      );
-                    },
-                    icon: Icon(Icons.search),
-                  ),
-                ],
               ),
               if (kelasIds.isEmpty)
                 const SliverToBoxAdapter(

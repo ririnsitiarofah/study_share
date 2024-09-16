@@ -141,8 +141,12 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                                   ),
                                 ],
                               );
-                              await FirebaseMessaging.instance
-                                  .subscribeToTopic('chat:${docRef.id}');
+                              try {
+                                await FirebaseMessaging.instance
+                                    .subscribeToTopic('chat-${docRef.id}');
+                              } catch (e, s) {
+                                log(e.toString(), error: e, stackTrace: s);
+                              }
 
                               Navigator.pushAndRemoveUntil(
                                 context,

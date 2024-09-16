@@ -134,10 +134,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         ),
                       ],
                     ),
-                    Text(
-                      _formatRangeDate(_event!['tanggal_mulai'], null),
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
+                    if (_event!['tipe'] == 'acara')
+                      Text(
+                        _formatRangeDate(_event!['tanggal_mulai'], null),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
                   ],
                 ),
               ),
@@ -150,12 +151,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   titleAlignment: ListTileTitleAlignment.top,
                   title: Text(_event!['deskripsi']),
                 ),
-              const Divider(),
+              if (_event!['tipe'] == 'tugas')
+                Card.outlined(
+                  child: ListTile(
+                    leading: const Icon(Icons.task_alt),
+                    title: const Text('Tenggat waktu'),
+                    subtitle: Text(_formatDate(_event!['tanggal_mulai'])),
+                  ),
+                )
+              else
+                const Divider(),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Dibuat oleh'),
                 subtitle: Text(_event!['nama_pemilik']),
-                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_today),
@@ -275,6 +284,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           return AddEventPage(
             initialType: event['tipe'],
             initialAppointmentData: event,
+            changable: false,
             onEventUpdated: (eventData) {
               setState(() {
                 _initialise();

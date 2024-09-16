@@ -13,6 +13,8 @@ class AddEventPage extends StatefulWidget {
     super.key,
     this.initialAppointmentData,
     this.initialDate,
+    this.initialIdKelas,
+    this.changable = true,
     required this.initialType,
     this.onEventAdded,
     this.onEventUpdated,
@@ -20,6 +22,8 @@ class AddEventPage extends StatefulWidget {
 
   final Map<String, dynamic>? initialAppointmentData;
   final DateTime? initialDate;
+  final String? initialIdKelas;
+  final bool changable;
   final String initialType;
   final void Function(Map<String, dynamic> eventData)? onEventAdded;
   final void Function(Map<String, dynamic> eventData)? onEventUpdated;
@@ -33,11 +37,8 @@ class _AddEventPageState extends State<AddEventPage> {
 
   Map<String, dynamic>? _selectedKelas;
 
-  static const _eventTypes = {
-    'acara': 'Acara',
-    'tugas': 'Tugas',
-  };
-  var _selectedEventType = _eventTypes.keys.first;
+  late final Map<String, String> _eventTypes;
+  late var _selectedEventType = _eventTypes.keys.first;
 
   final _getKelas = FirebaseFirestore.instance
       .collection('member_kelas')
@@ -49,6 +50,13 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   void initState() {
+    _eventTypes = {
+      'acara': 'Acara',
+      'tugas': 'Tugas',
+    }..removeWhere((key, value) {
+        return !widget.changable && key != widget.initialType;
+      });
+
     if (widget.initialAppointmentData == null) {
       final date = widget.initialDate!;
       final now = DateTime.now();
@@ -230,6 +238,14 @@ class _AddEventPageState extends State<AddEventPage> {
                       .firstWhere((doc) => doc.data()['id_kelas'] == idKelas)
                       .data(),
                 };
+              } else if (widget.initialIdKelas != null) {
+                _selectedKelas ??= {
+                  'id': widget.initialIdKelas,
+                  ...docs
+                      .firstWhere((doc) =>
+                          doc.data()['id_kelas'] == widget.initialIdKelas)
+                      .data(),
+                };
               } else {
                 _selectedKelas ??= {
                   'id': docs.first['id_kelas'],
@@ -241,6 +257,7 @@ class _AddEventPageState extends State<AddEventPage> {
                 title: Text(_selectedKelas!['nama_kelas']),
                 leading: const Icon(Icons.class_),
                 trailing: const Icon(Icons.arrow_drop_down),
+                enabled: widget.changable,
                 onTap: () async {
                   final kelas = await showDialog(
                     context: context,

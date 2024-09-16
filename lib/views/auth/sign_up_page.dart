@@ -15,6 +15,8 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final _formKey = GlobalKey<FormState>();
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -42,6 +44,7 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Form(
+                  key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +70,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           icon: Icon(Icons.person_2_rounded),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
                         autocorrect: false,
@@ -87,6 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           icon: Icon(Icons.email_rounded),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_showPassword,
@@ -119,6 +124,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         obscureText: !_showPassword,
                         autocorrect: false,
@@ -126,6 +132,10 @@ class _SignUpPageState extends State<SignUpPage> {
                         validator: FormBuilderValidators.compose(
                           [
                             FormBuilderValidators.required(
+                              errorText: "Konfirmasi passwordnya isi dulu ya.",
+                            ),
+                            FormBuilderValidators.equal(
+                              _passwordController.text,
                               errorText: "Passwordnya gak sama.",
                             ),
                           ],
@@ -156,6 +166,10 @@ class _SignUpPageState extends State<SignUpPage> {
                             elevation: ButtonStyleButton.allOrNull(0),
                           ),
                           onPressed: () async {
+                            if (!_formKey.currentState!.validate()) {
+                              return;
+                            }
+
                             try {
                               final cred = await FirebaseAuth.instance
                                   .createUserWithEmailAndPassword(

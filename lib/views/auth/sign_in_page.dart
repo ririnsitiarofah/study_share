@@ -1,8 +1,11 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/reset_password_page.dart';
 import 'package:studyshare/views/auth/sign_up_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
@@ -72,6 +75,7 @@ class _SignInPageState extends State<SignInPage> {
                           icon: Icon(Icons.mail_lock_rounded),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_showPassword,
@@ -137,10 +141,25 @@ class _SignInPageState extends State<SignInPage> {
                               return;
                             }
                             try {
-                              await FirebaseAuth.instance
+                              final cred = await FirebaseAuth.instance
                                   .signInWithEmailAndPassword(
                                       email: _emailController.text,
                                       password: _passwordController.text);
+
+                              try {
+                                final kelas = await FirebaseFirestore.instance
+                                    .collection('member_kelas')
+                                    .where('id_user', isEqualTo: cred.user!.uid)
+                                    .get();
+
+                                for (var doc in kelas.docs) {
+                                  await FirebaseMessaging.instance
+                                      .subscribeToTopic('chat-${doc.id}');
+                                  await saveNotifications(context);
+                                }
+                              } catch (e, s) {
+                                log(e.toString(), error: e, stackTrace: s);
+                              }
 
                               Navigator.pushReplacement(
                                 context,
