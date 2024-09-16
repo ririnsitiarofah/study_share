@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -97,8 +96,6 @@ Future<void> main() async {
     log(fcmToken.toString());
   }
 
-  await messaging.subscribeToTopic("acara");
-
   final settings = await messaging.requestPermission(
     alert: true,
     announcement: false,
@@ -116,11 +113,12 @@ Future<void> main() async {
     log('Message data: ${message.data}');
 
     final notification = message.notification;
-    final currentUser = FirebaseAuth.instance.currentUser;
+    // final currentUser = FirebaseAuth.instance.currentUser;
 
     if (notification == null) return;
 
-    if (message.data['id_pemilik'] == currentUser?.uid) return;
+    // TODO: Uncomment this if you want to prevent notification from showing
+    // if (message.data['id_pemilik'] == currentUser?.uid) return;
 
     if (message.data['channel'] == 'event') {
       var platformChannelSpecifics = const NotificationDetails(

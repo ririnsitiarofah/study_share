@@ -65,13 +65,15 @@ class DirectoriesPage extends StatelessWidget {
         ? FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'postingan')
-            .where('id_parent', isEqualTo: idDirektori)
+            .where('id_parent',
+                isEqualTo: idDirektori, isNull: idDirektori == null)
             .where('id_kelas', isEqualTo: idKelas)
             .orderBy('tanggal_dibuat', descending: true)
         : FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'postingan')
-            .where('id_parent', isEqualTo: idDirektori)
+            .where('id_parent',
+                isEqualTo: idDirektori, isNull: idDirektori == null)
             .where('id_kelas', isNull: true)
             .where('id_pemilik',
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
@@ -81,6 +83,53 @@ class DirectoriesPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: CustomScrollView(
         slivers: [
+          SliverToBoxAdapter(
+            child: isKelas
+                ? Card.filled(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    color: colorScheme.secondaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.groups,
+                            color: colorScheme.onSecondaryContainer,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'Folder sama postingan disini dibagiin ke semua anggota kelas ini',
+                              style: textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Card.filled(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    color: colorScheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.verified_user,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'Folder sama postingan disini cuman bisa diakses sama kamu aja',
+                              style: textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),

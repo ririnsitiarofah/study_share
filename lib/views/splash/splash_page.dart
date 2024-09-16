@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
@@ -22,18 +20,6 @@ class _SplashPageState extends State<SplashPage> {
       await saveNotifications(context);
 
       if (FirebaseAuth.instance.currentUser != null) {
-        final memberKelas = await FirebaseFirestore.instance
-            .collection('member_kelas')
-            .where('id_user', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-            .get();
-
-        await Future.wait(
-          memberKelas.docs.map((member) async {
-            await FirebaseMessaging.instance
-                .subscribeToTopic('chat-${member.data()['id_kelas']}');
-          }),
-        );
-
         await Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(

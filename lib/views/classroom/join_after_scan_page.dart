@@ -188,6 +188,8 @@ class _JoinAfterScanPageState extends State<JoinAfterScanPage> {
                               FirebaseChatCore.instance.updateRoom(updatedRoom);
                               try {
                                 await FirebaseMessaging.instance
+                                    .subscribeToTopic('acara-${doc.id}');
+                                await FirebaseMessaging.instance
                                     .subscribeToTopic('chat-${doc.id}');
                               } catch (e, s) {
                                 log(e.toString(), error: e, stackTrace: s);

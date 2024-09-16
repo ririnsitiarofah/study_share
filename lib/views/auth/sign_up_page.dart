@@ -171,6 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                             try {
                               context.loaderOverlay.show();
+
                               final cred = await FirebaseAuth.instance
                                   .createUserWithEmailAndPassword(
                                       email: _emailController.text,

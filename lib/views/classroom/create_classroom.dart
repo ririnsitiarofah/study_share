@@ -135,6 +135,9 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                                 name: _classNameController.text,
                                 metadata: {
                                   'id_kelas': docRef.id,
+                                  'users': {
+                                    user.uid: user.displayName,
+                                  },
                                 },
                                 users: [
                                   types.User(
@@ -145,6 +148,8 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                                 ],
                               );
                               try {
+                                await FirebaseMessaging.instance
+                                    .subscribeToTopic('acara-${docRef.id}');
                                 await FirebaseMessaging.instance
                                     .subscribeToTopic('chat-${docRef.id}');
                               } catch (e, s) {

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/reset_password_page.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:studyshare/views/home/account/update_email_page.dart';
@@ -62,8 +63,11 @@ class AccountPage extends StatelessWidget {
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: colorScheme.error,
                                 ),
-                                onPressed: () {
-                                  FirebaseAuth.instance.signOut();
+                                onPressed: () async {
+                                  await FirebaseAuth.instance.signOut();
+
+                                  await resetNotifications(context);
+
                                   Navigator.pushAndRemoveUntil(
                                     context,
                                     MaterialPageRoute(

@@ -136,7 +136,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
                     if (_event!['tipe'] == 'acara')
                       Text(
-                        _formatRangeDate(_event!['tanggal_mulai'], null),
+                        _event!['ulangi'] != 'none'
+                            ? _formatDate(Timestamp.fromDate(_getNextOccurrence(
+                                _event!['tanggal_mulai'].toDate(),
+                                _event!['ulangi'])))
+                            : _formatRangeDate(
+                                _event!['tanggal_mulai'],
+                                _event!['tanggal_selesai'],
+                              ),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                   ],
@@ -161,6 +168,20 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 )
               else
                 const Divider(),
+              if (_event!['ulangi'] != 'none')
+                ListTile(
+                  leading: const Icon(Icons.repeat),
+                  title: const Text('Ulangi'),
+                  subtitle: Text(
+                    _event!['ulangi'] == 'harian'
+                        ? 'Setiap hari'
+                        : _event!['ulangi'] == 'mingguan'
+                            ? 'Setiap minggu'
+                            : _event!['ulangi'] == 'bulanan'
+                                ? 'Setiap bulan'
+                                : 'Setiap tahun',
+                  ),
+                ),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Dibuat oleh'),
@@ -296,5 +317,39 @@ class _EventDetailPageState extends State<EventDetailPage> {
         fullscreenDialog: true,
       ),
     );
+  }
+
+  DateTime _getNextOccurrence(DateTime startDate, String ulangi) {
+    DateTime today = DateTime.now();
+
+    switch (ulangi) {
+      case 'harian':
+        while (startDate.isBefore(today)) {
+          startDate = startDate.add(const Duration(days: 1));
+        }
+        break;
+      case 'mingguan':
+        while (startDate.isBefore(today)) {
+          startDate = startDate.add(const Duration(days: 7));
+        }
+        break;
+      case 'bulanan':
+        while (startDate.isBefore(today)) {
+          startDate =
+              DateTime(startDate.year, startDate.month + 1, startDate.day);
+        }
+        break;
+      case 'tahunan':
+        while (startDate.isBefore(today)) {
+          startDate =
+              DateTime(startDate.year + 1, startDate.month, startDate.day);
+        }
+        break;
+      case 'none':
+      default:
+        break; // No recurrence
+    }
+
+    return startDate;
   }
 }

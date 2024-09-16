@@ -386,9 +386,9 @@ class _AddEventPageState extends State<AddEventPage> {
                     },
                     child: SizedBox(
                       height: 48,
-                      width: 48,
+                      width: 52,
                       child: Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.centerRight,
                         child: Text(
                           formatTime(_selectedAppointment.startTime),
                           style: textTheme.bodyLarge,
@@ -468,9 +468,9 @@ class _AddEventPageState extends State<AddEventPage> {
                       },
                       child: SizedBox(
                         height: 48,
-                        width: 48,
+                        width: 52,
                         child: Align(
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.centerRight,
                           child: Text(
                             formatTime(_selectedAppointment.endTime),
                             style: textTheme.bodyLarge,
@@ -643,7 +643,7 @@ class _AddEventPageState extends State<AddEventPage> {
   }
 
   String formatDate(DateTime date) {
-    return DateFormat.yMMMMEEEEd().format(date);
+    return DateFormat('EEEE, d MMM yyyy').format(date);
   }
 
   String formatTime(DateTime date) {

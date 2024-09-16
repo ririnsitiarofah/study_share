@@ -17,23 +17,76 @@ class EventsPage extends StatefulWidget {
 }
 
 class _EventsPageState extends State<EventsPage> {
-  late final Query<Map<String, dynamic>> _queryMendatang;
   late final Query<Map<String, dynamic>> _queryYangLalu;
 
-  @override
-  void initState() {
-    _queryMendatang = FirebaseFirestore.instance
+  final int _limit = 10;
+  DocumentSnapshot? _lastFutureEventSnapshot;
+  DocumentSnapshot? _lastRecurrentEventSnapshot;
+
+  Future<List<QueryDocumentSnapshot>> getAcaraMendatangPaginated(
+      {bool isLoadMore = false}) async {
+    // Fetch future events
+    Query futureQuery = FirebaseFirestore.instance
         .collection('acara')
         .where('id_kelas', isEqualTo: widget.idKelas)
         .where('tipe', isEqualTo: 'acara')
         .where('tanggal_mulai', isGreaterThanOrEqualTo: Timestamp.now())
-        .orderBy('tanggal_mulai');
+        .where('ulangi', isEqualTo: 'none')
+        .orderBy('tanggal_mulai')
+        .limit(_limit);
 
+    if (isLoadMore && _lastFutureEventSnapshot != null) {
+      futureQuery = futureQuery.startAfterDocument(_lastFutureEventSnapshot!);
+    }
+
+    QuerySnapshot futureEventsSnapshot = await futureQuery.get();
+    if (futureEventsSnapshot.docs.isNotEmpty) {
+      _lastFutureEventSnapshot = futureEventsSnapshot.docs.last;
+    }
+
+    // Fetch recurrent events
+    Query recurrentQuery = FirebaseFirestore.instance
+        .collection('acara')
+        .where('id_kelas', isEqualTo: widget.idKelas)
+        .where('tipe', isEqualTo: 'acara')
+        .where('ulangi', isNotEqualTo: 'none')
+        .orderBy('ulangi')
+        .limit(_limit);
+
+    if (isLoadMore && _lastRecurrentEventSnapshot != null) {
+      recurrentQuery =
+          recurrentQuery.startAfterDocument(_lastRecurrentEventSnapshot!);
+    }
+
+    QuerySnapshot recurrentEventsSnapshot = await recurrentQuery.get();
+    if (recurrentEventsSnapshot.docs.isNotEmpty) {
+      _lastRecurrentEventSnapshot = recurrentEventsSnapshot.docs.last;
+    }
+
+    // Combine the two results
+    List<QueryDocumentSnapshot> allEvents = [
+      ...futureEventsSnapshot.docs,
+      ...recurrentEventsSnapshot.docs
+    ];
+
+    // Optional: Sort by 'tanggal_mulai'
+    allEvents.sort((a, b) {
+      Timestamp dateA = a['tanggal_mulai'];
+      Timestamp dateB = b['tanggal_mulai'];
+      return dateA.compareTo(dateB);
+    });
+
+    return allEvents;
+  }
+
+  @override
+  void initState() {
     _queryYangLalu = FirebaseFirestore.instance
         .collection('acara')
         .where('id_kelas', isEqualTo: widget.idKelas)
         .where('tipe', isEqualTo: 'acara')
         .where('tanggal_mulai', isLessThan: Timestamp.now())
+        .where('ulangi', isEqualTo: 'none')
         .orderBy('tanggal_mulai', descending: true);
 
     super.initState();
@@ -58,10 +111,10 @@ class _EventsPageState extends State<EventsPage> {
             ),
           ),
         ),
-        FirestoreQueryBuilder(
-          query: _queryMendatang,
-          builder: (context, snapshot, child) {
-            if (snapshot.isFetching) {
+        FutureBuilder<List<QueryDocumentSnapshot>>(
+          future: getAcaraMendatangPaginated(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const SliverToBoxAdapter(
                 child: Center(
                   child: CircularProgressIndicator(),
@@ -77,7 +130,7 @@ class _EventsPageState extends State<EventsPage> {
               );
             }
 
-            if (snapshot.docs.isEmpty) {
+            if (snapshot.data == null || snapshot.data!.isEmpty) {
               return SliverToBoxAdapter(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -85,7 +138,10 @@ class _EventsPageState extends State<EventsPage> {
                     Icon(
                       Icons.event_available,
                       size: 48,
-                      color: colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.5),
                     ),
                     const SizedBox(height: 8),
                     const Center(
@@ -96,14 +152,31 @@ class _EventsPageState extends State<EventsPage> {
               );
             }
 
+            final events = snapshot.data!;
+
             return SliverList.builder(
-              itemCount: snapshot.docs.length,
+              itemCount: events.length,
               itemBuilder: (context, index) {
-                if (snapshot.hasMore && index + 1 == snapshot.docs.length) {
-                  snapshot.fetchMore();
+                // Trigger pagination if at the end of the list
+                if (index + 1 == events.length) {
+                  getAcaraMendatangPaginated(isLoadMore: true);
                 }
 
-                final doc = snapshot.docs[index];
+                final doc = events[index];
+
+                DateTime startDate =
+                    (doc['tanggal_mulai'] as Timestamp).toDate();
+                DateTime endDate =
+                    (doc['tanggal_selesai'] as Timestamp).toDate();
+
+// Check for recurrence based on 'ulangi' key
+                String ulangi = doc['ulangi'] ?? 'none';
+
+                if (ulangi != 'none') {
+                  startDate = _getNextOccurrence(startDate, ulangi);
+                  endDate = _getNextOccurrence(
+                      endDate, ulangi); // Adjust end date similarly
+                }
 
                 return ValueListenableBuilder(
                   valueListenable: Hive.box('acaraSelesaiBox').listenable(),
@@ -174,26 +247,38 @@ class _EventsPageState extends State<EventsPage> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: colorScheme.primary,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         'Selesai',
-                                        style: textTheme.labelSmall?.copyWith(
-                                          color: colorScheme.onPrimary,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
+                                            ),
                                       ),
                                     ),
                                 ],
                               ),
                               subtitle: Text(
-                                _formatDate(doc['tanggal_mulai']) +
+                                _formatDate(Timestamp.fromDate(startDate)) +
                                     ', ' +
-                                    _formatRangeDate(doc['tanggal_mulai'],
-                                        doc['tanggal_selesai']),
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.outline,
-                                ),
+                                    _formatRangeDate(
+                                        Timestamp.fromDate(startDate),
+                                        Timestamp.fromDate(endDate)),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.outline,
+                                    ),
                               ),
                               leading: SizedBox(
                                 width: 24,
@@ -215,9 +300,8 @@ class _EventsPageState extends State<EventsPage> {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => EventDetailPage(
-                                    idTugas: doc.id,
-                                  ),
+                                  builder: (context) =>
+                                      EventDetailPage(idTugas: doc.id),
                                   fullscreenDialog: true,
                                 ),
                               ),
@@ -445,5 +529,39 @@ class _EventsPageState extends State<EventsPage> {
             '- ${DateFormat('d MMM yyyy, HH:mm').format(endDate.toDate())}');
       }
     }
+  }
+
+  DateTime _getNextOccurrence(DateTime startDate, String ulangi) {
+    DateTime today = DateTime.now();
+
+    switch (ulangi) {
+      case 'harian':
+        while (startDate.isBefore(today)) {
+          startDate = startDate.add(const Duration(days: 1));
+        }
+        break;
+      case 'mingguan':
+        while (startDate.isBefore(today)) {
+          startDate = startDate.add(const Duration(days: 7));
+        }
+        break;
+      case 'bulanan':
+        while (startDate.isBefore(today)) {
+          startDate =
+              DateTime(startDate.year, startDate.month + 1, startDate.day);
+        }
+        break;
+      case 'tahunan':
+        while (startDate.isBefore(today)) {
+          startDate =
+              DateTime(startDate.year + 1, startDate.month, startDate.day);
+        }
+        break;
+      case 'none':
+      default:
+        break; // No recurrence
+    }
+
+    return startDate;
   }
 }

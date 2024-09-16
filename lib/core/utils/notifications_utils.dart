@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -10,7 +11,8 @@ import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:timezone/data/latest_all.dart';
 import 'package:timezone/timezone.dart';
 
-Future<void> saveNotifications([BuildContext? context]) async {
+Future<void> saveNotifications(
+    [BuildContext? context, bool subscribe = false]) async {
   try {
     log('Saving local notifications...');
     final user = FirebaseAuth.instance.currentUser;
@@ -27,8 +29,21 @@ Future<void> saveNotifications([BuildContext? context]) async {
         .where('id_user', isEqualTo: user.uid)
         .get();
 
-    final kelasIds =
-        snapshotMember.docs.map((e) => e.data()['id_kelas'] as String).toList();
+    final kelasIds = await Future.wait(snapshotMember.docs.map(
+      (doc) async {
+        try {
+          if (subscribe) {
+            await FirebaseMessaging.instance
+                .subscribeToTopic("acara-${doc.data()['id_kelas']}");
+            await FirebaseMessaging.instance
+                .subscribeToTopic('chat-${doc.data()['id_kelas']}');
+          }
+        } catch (e, s) {
+          log(e.toString(), error: e, stackTrace: s);
+        }
+        return doc.data()['id_kelas'] as String;
+      },
+    ).toList());
 
     if (kelasIds.isEmpty) {
       return;
@@ -101,6 +116,45 @@ Future<void> saveNotifications([BuildContext? context]) async {
     }
 
     log('Local notifications saved!');
+  } catch (e, stackTrace) {
+    if (e is PlatformException && e.code == 'exact_alarms_not_permitted') {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      ScaffoldMessenger.of(context!).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Izin notifikasi tidak diizinkan. Silakan aktifkan notifikasi di pengaturan aplikasi.',
+          ),
+        ),
+      );
+      return;
+    }
+    log(e.toString(), error: e, stackTrace: stackTrace);
+
+    if (context == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Gagal memuat data. Silakan coba lagi.'),
+      ),
+    );
+  }
+}
+
+Future<void> resetNotifications([BuildContext? context]) async {
+  try {
+    log('Resetting local notifications...');
+
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    final requests =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    for (var element in requests) {
+      flutterLocalNotificationsPlugin.cancel(element.id);
+    }
+
+    FirebaseMessaging.instance.deleteToken();
+
+    log('Local notifications reset!');
   } catch (e, stackTrace) {
     if (e is PlatformException && e.code == 'exact_alarms_not_permitted') {
       log(e.toString(), error: e, stackTrace: stackTrace);

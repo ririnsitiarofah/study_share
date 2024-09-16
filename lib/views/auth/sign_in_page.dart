@@ -1,8 +1,6 @@
 import 'dart:developer';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -144,25 +142,30 @@ class _SignInPageState extends State<SignInPage> {
                             try {
                               context.loaderOverlay.show();
 
-                              final cred = await FirebaseAuth.instance
+                              await FirebaseAuth.instance
                                   .signInWithEmailAndPassword(
                                       email: _emailController.text,
                                       password: _passwordController.text);
 
-                              try {
-                                final kelas = await FirebaseFirestore.instance
-                                    .collection('member_kelas')
-                                    .where('id_user', isEqualTo: cred.user!.uid)
-                                    .get();
+                              context.loaderOverlay.show(
+                                widgetBuilder: (progress) {
+                                  return const AlertDialog(
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        CircularProgressIndicator(),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          "Login berhasil! Tunggu sebentar yah, lagi nyiapin data kamu...",
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
 
-                                for (var doc in kelas.docs) {
-                                  await FirebaseMessaging.instance
-                                      .subscribeToTopic('chat-${doc.id}');
-                                  await saveNotifications(context);
-                                }
-                              } catch (e, s) {
-                                log(e.toString(), error: e, stackTrace: s);
-                              }
+                              await saveNotifications(context, true);
 
                               Navigator.pushReplacement(
                                 context,
