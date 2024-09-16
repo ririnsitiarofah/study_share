@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/core/utils/colors.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -646,11 +647,13 @@ class _AddEventPageState extends State<AddEventPage> {
   }
 
   String formatTime(DateTime date) {
-    return DateFormat.Hm('ID').format(date);
+    return DateFormat.Hm().format(date);
   }
 
   Future<void> _addEvent() async {
     try {
+      context.loaderOverlay.show();
+
       final user = FirebaseAuth.instance.currentUser!;
       final eventMap = _generateEventMap(user);
 
@@ -670,11 +673,15 @@ class _AddEventPageState extends State<AddEventPage> {
           content: Text("Gagal menambahkan acara, silahkan coba lagi!"),
         ),
       );
+    } finally {
+      context.loaderOverlay.hide();
     }
   }
 
   Future<void> _updateEvent() async {
     try {
+      context.loaderOverlay.show();
+
       final user = FirebaseAuth.instance.currentUser!;
       final eventMap = _generateEventMap(user)..remove('tanggal_dibuat');
 
@@ -696,6 +703,8 @@ class _AddEventPageState extends State<AddEventPage> {
           content: Text("Gagal menambahkan acara, silahkan coba lagi!"),
         ),
       );
+    } finally {
+      context.loaderOverlay.hide();
     }
   }
 

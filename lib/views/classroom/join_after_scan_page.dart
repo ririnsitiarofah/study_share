@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
@@ -83,6 +84,8 @@ class _JoinAfterScanPageState extends State<JoinAfterScanPage> {
                           onPressed: () async {
                             try {
                               if (!_formKey.currentState!.validate()) return;
+
+                              context.loaderOverlay.show();
 
                               final classSnapshot = await FirebaseFirestore
                                   .instance
@@ -209,6 +212,8 @@ class _JoinAfterScanPageState extends State<JoinAfterScanPage> {
                                       "Gagal bergabung ke kelas. Silakan coba lagi."),
                                 ),
                               );
+                            } finally {
+                              context.loaderOverlay.hide();
                             }
                           },
                           child: const Text('Join kelas'),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:linkfy_text/linkfy_text.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
@@ -146,6 +147,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     ),
                     onTap: (link) async {
                       try {
+                        context.loaderOverlay.show();
+
                         switch (link.type) {
                           case LinkType.url:
                             if (link.value!.startsWith('http') ||
@@ -173,6 +176,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 Text("Gagal membuka link, silahkan coba lagi!"),
                           ),
                         );
+                      } finally {
+                        context.loaderOverlay.hide();
                       }
                     },
                   ),
@@ -233,6 +238,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
     required String url,
   }) async {
     try {
+      context.loaderOverlay.show();
+
       final documentsDir = (await getApplicationDocumentsDirectory()).path;
       final localPath = '$documentsDir/$id.$extension';
 
@@ -256,6 +263,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
           content: Text("Gagal mengunduh lampiran. Silakan coba lagi."),
         ),
       );
+    } finally {
+      context.loaderOverlay.hide();
     }
   }
 

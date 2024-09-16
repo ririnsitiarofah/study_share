@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 
 class ResetPasswordPage extends StatefulWidget {
@@ -88,6 +89,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             }
 
                             try {
+                              context.loaderOverlay.show();
                               await FirebaseAuth.instance
                                   .sendPasswordResetEmail(
                                       email: _emailController.text);
@@ -117,6 +119,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                       "Gagal mengirim email reset password."),
                                 ),
                               );
+                            } finally {
+                              context.loaderOverlay.hide();
                             }
                           },
                           child: const Text('Kirim'),

@@ -5,15 +5,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:linkfy_text/linkfy_text.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
 import 'package:studyshare/views/home/directories/add_folder_dialog.dart';
 import 'package:studyshare/views/home/directories/add_post_dialog.dart';
-import 'package:studyshare/views/home/directories/directories_wrapper_page.dart';
 import 'package:studyshare/views/home/directories/post_detail_page.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
@@ -27,6 +28,7 @@ class DirectoriesPage extends StatelessWidget {
     required this.namaKelas,
     required this.idDirektori,
     required this.namaDirektori,
+    required this.tabController,
   });
 
   final bool isKelas;
@@ -34,6 +36,7 @@ class DirectoriesPage extends StatelessWidget {
   final String namaKelas;
   final String? idDirektori;
   final String? namaDirektori;
+  final TabController tabController;
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +47,15 @@ class DirectoriesPage extends StatelessWidget {
         ? FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'folder')
-            .where('id_parent', isEqualTo: idDirektori)
+            .where('id_parent',
+                isEqualTo: idDirektori, isNull: idDirektori == null)
             .where('id_kelas', isEqualTo: idKelas)
             .orderBy('nama')
         : FirebaseFirestore.instance
             .collection('direktori')
             .where('tipe', isEqualTo: 'folder')
-            .where('id_parent', isEqualTo: idDirektori)
+            .where('id_parent',
+                isEqualTo: idDirektori, isNull: idDirektori == null)
             .where('id_kelas', isNull: true)
             .where('id_pemilik',
                 isEqualTo: FirebaseAuth.instance.currentUser!.uid)
@@ -216,11 +221,69 @@ class DirectoriesPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DirectoriesWrapperPage(
-                              idKelas: idKelas,
-                              namaKelas: namaKelas,
-                              idDirektori: doc.id,
-                              namaDirektori: data['nama'],
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(
+                                title: Text(data['nama']),
+                              ),
+                              body: DirectoriesPage(
+                                idKelas: idKelas,
+                                namaKelas: namaKelas,
+                                idDirektori: doc.id,
+                                namaDirektori: data['nama'],
+                                tabController: tabController,
+                                isKelas: isKelas,
+                              ),
+                              floatingActionButton: SpeedDial(
+                                heroTag: 'fab',
+                                icon: Icons.add,
+                                label: !isKelas ? const Text("Personal") : null,
+                                shape: Theme.of(context)
+                                        .floatingActionButtonTheme
+                                        .shape ??
+                                    const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(16),
+                                      ),
+                                    ),
+                                activeIcon: Icons.close,
+                                childrenButtonSize: const Size.square(48),
+                                spaceBetweenChildren: 16,
+                                childPadding: const EdgeInsets.all(4),
+                                children: [
+                                  SpeedDialChild(
+                                    label: ("Buat Postingan"),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          fullscreenDialog: true,
+                                          builder: (context) => AddPostDialog(
+                                            idParent: doc.id,
+                                            idKelas: isKelas ? idKelas : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: const Icon(Icons.post_add_rounded),
+                                  ),
+                                  SpeedDialChild(
+                                    label: ('Buat folder'),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          fullscreenDialog: true,
+                                          builder: (context) => AddFolderDialog(
+                                            idParent: doc.id,
+                                            idKelas: isKelas ? idKelas : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: const Icon(Icons.create_new_folder),
+                                  )
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -344,6 +407,8 @@ class DirectoriesPage extends StatelessWidget {
                                       ),
                                       onTap: (link) async {
                                         try {
+                                          context.loaderOverlay.show();
+
                                           switch (link.type) {
                                             case LinkType.url:
                                               if (link.value!
@@ -378,6 +443,8 @@ class DirectoriesPage extends StatelessWidget {
                                                   "Gagal membuka link, silahkan coba lagi!"),
                                             ),
                                           );
+                                        } finally {
+                                          context.loaderOverlay.hide();
                                         }
                                       },
                                     ),
@@ -513,6 +580,8 @@ class DirectoriesPage extends StatelessWidget {
     required String url,
   }) async {
     try {
+      context.loaderOverlay.show();
+
       final documentsDir = (await getApplicationDocumentsDirectory()).path;
       final localPath = '$documentsDir/$id.$extension';
 
@@ -536,6 +605,8 @@ class DirectoriesPage extends StatelessWidget {
           content: Text("Gagal mengunduh lampiran. Silakan coba lagi."),
         ),
       );
+    } finally {
+      context.loaderOverlay.hide();
     }
   }
 

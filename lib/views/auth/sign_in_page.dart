@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/views/auth/reset_password_page.dart';
 import 'package:studyshare/views/auth/sign_up_page.dart';
@@ -141,6 +142,8 @@ class _SignInPageState extends State<SignInPage> {
                               return;
                             }
                             try {
+                              context.loaderOverlay.show();
+
                               final cred = await FirebaseAuth.instance
                                   .signInWithEmailAndPassword(
                                       email: _emailController.text,
@@ -176,6 +179,8 @@ class _SignInPageState extends State<SignInPage> {
                                       Text("Email atau Password anda salah"),
                                 ),
                               );
+                            } finally {
+                              context.loaderOverlay.hide();
                             }
                           },
                           child: const Text('Masuk sekarang'),

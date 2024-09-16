@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:shortid/shortid.dart';
 import 'package:studyshare/views/home/home_page.dart';
 
@@ -107,6 +108,8 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                             try {
                               if (!_formKey.currentState!.validate()) return;
 
+                              context.loaderOverlay.show();
+
                               final docRef = await FirebaseFirestore.instance
                                   .collection('kelas')
                                   .add({
@@ -165,6 +168,8 @@ class _CreateClassroomPageState extends State<CreateClassroomPage> {
                                       "Gagal membuat kelas. Silakan coba lagi."),
                                 ),
                               );
+                            } finally {
+                              context.loaderOverlay.hide();
                             }
                           },
                           child: const Text('Buat kelas'),

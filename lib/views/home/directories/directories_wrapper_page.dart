@@ -18,6 +18,7 @@ class DirectoriesWrapperPage extends StatefulWidget {
     required this.idDirektori,
     required this.namaDirektori,
     this.initialTab = 0,
+    this.tabController,
   });
 
   final String idKelas;
@@ -25,6 +26,7 @@ class DirectoriesWrapperPage extends StatefulWidget {
   final String? idDirektori;
   final String? namaDirektori;
   final int initialTab;
+  final TabController? tabController;
 
   @override
   State<DirectoriesWrapperPage> createState() => _DirectoriesWrapperPageState();
@@ -35,6 +37,8 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
   late final TabController _tabController;
 
   var _selectedIndex = 0;
+  var _selectedTabIndex = 0;
+
   late String _namaKelas;
 
   @override
@@ -42,7 +46,19 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
     _namaKelas = widget.namaKelas;
     _selectedIndex = widget.initialTab;
 
-    _tabController = TabController(length: 2, vsync: this);
+    if (widget.tabController != null) {
+      _tabController = widget.tabController!;
+      _selectedTabIndex = _tabController.index;
+    } else {
+      _tabController = TabController(length: 2, vsync: this)
+        ..addListener(
+          () {
+            setState(() {
+              _selectedTabIndex = _tabController.index;
+            });
+          },
+        );
+    }
     super.initState();
   }
 
@@ -67,6 +83,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
           0 => SpeedDial(
               heroTag: 'fab',
               icon: Icons.add,
+              label: _selectedTabIndex == 1 ? const Text("Personal") : null,
               shape: Theme.of(context).floatingActionButtonTheme.shape ??
                   const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(
@@ -88,7 +105,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
                         builder: (context) => AddPostDialog(
                           idParent: widget.idDirektori,
                           idKelas:
-                              _tabController.index == 0 ? widget.idKelas : null,
+                              _selectedTabIndex == 0 ? widget.idKelas : null,
                         ),
                       ),
                     );
@@ -250,6 +267,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
                     namaKelas: widget.namaKelas,
                     idDirektori: widget.idDirektori,
                     namaDirektori: widget.namaDirektori,
+                    tabController: _tabController,
                   ),
                   DirectoriesPage(
                     isKelas: false,
@@ -257,6 +275,7 @@ class _DirectoriesWrapperPageState extends State<DirectoriesWrapperPage>
                     namaKelas: widget.namaKelas,
                     idDirektori: widget.idDirektori,
                     namaDirektori: widget.namaDirektori,
+                    tabController: _tabController,
                   ),
                 ],
               ),

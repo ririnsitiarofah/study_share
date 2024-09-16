@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
@@ -101,6 +102,17 @@ Future<void> saveNotifications([BuildContext? context]) async {
 
     log('Local notifications saved!');
   } catch (e, stackTrace) {
+    if (e is PlatformException && e.code == 'exact_alarms_not_permitted') {
+      log(e.toString(), error: e, stackTrace: stackTrace);
+      ScaffoldMessenger.of(context!).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Izin notifikasi tidak diizinkan. Silakan aktifkan notifikasi di pengaturan aplikasi.',
+          ),
+        ),
+      );
+      return;
+    }
     log(e.toString(), error: e, stackTrace: stackTrace);
 
     if (context == null) return;

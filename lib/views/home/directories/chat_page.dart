@@ -132,6 +132,7 @@ class _ChatPageState extends State<ChatPage> {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         const SliverAppBar(
+          pinned: true,
           title: Text('Obrolan'),
         ),
       ],

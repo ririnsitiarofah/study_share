@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:studyshare/views/core/helpers/formatters.dart';
 import 'package:uuid/uuid.dart';
@@ -80,6 +81,8 @@ class _AddPostDialogState extends State<AddPostDialog> {
                   );
                   return;
                 }
+                context.loaderOverlay.show();
+
                 // EDIT POST
                 if (widget.existingPostId != null) {
                   await FirebaseFirestore.instance
@@ -144,6 +147,8 @@ class _AddPostDialogState extends State<AddPostDialog> {
                     content: Text("Gagal menyimpan folder"),
                   ),
                 );
+              } finally {
+                context.loaderOverlay.hide();
               }
             },
             style: ElevatedButton.styleFrom(
@@ -159,6 +164,58 @@ class _AddPostDialogState extends State<AddPostDialog> {
         key: _formKey,
         child: CustomScrollView(
           slivers: [
+            const SliverPadding(padding: EdgeInsets.only(top: 16)),
+            SliverToBoxAdapter(
+              child: widget.idKelas != null
+                  ? Card.filled(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                      ),
+                      color: colorScheme.secondaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.groups,
+                              color: colorScheme.onSecondaryContainer,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Postingan ini bakal dibagiin ke semua anggota kelas',
+                                style: textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Card.filled(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                      ),
+                      color: colorScheme.primaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.verified_user,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Postingan ini bakal bisa diakses sama kamu aja',
+                                style: textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),

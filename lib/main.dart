@@ -9,6 +9,7 @@ import 'package:flutter_firebase_chat_core/flutter_firebase_chat_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/core/utils/notifications_utils.dart';
 import 'package:studyshare/firebase_options.dart';
 import 'package:studyshare/views/home/calendar/event_detail_page.dart';
@@ -245,6 +246,30 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData.dark(),
           navigatorKey: navigatorKey,
+          builder: (context, child) {
+            final currentBrightness = Theme.of(context).brightness;
+            final lightColorScheme = Theme.of(context).colorScheme;
+            final darkColorScheme = ThemeData.dark().colorScheme;
+
+            return LoaderOverlay(
+              useBackButtonInterceptor: true,
+              duration: const Duration(milliseconds: 250),
+              reverseDuration: const Duration(milliseconds: 250),
+              overlayColor: switch (currentBrightness) {
+                Brightness.dark => darkColorScheme.surface.withOpacity(0.5),
+                Brightness.light => lightColorScheme.surface.withOpacity(0.5),
+              },
+              overlayWidgetBuilder: (_) {
+                return const SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: LinearProgressIndicator(),
+                  ),
+                );
+              },
+              child: child!,
+            );
+          },
           home: child,
         );
       },

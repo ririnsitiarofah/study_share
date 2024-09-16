@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/views/auth/sign_in_page.dart';
 import 'package:studyshare/views/home/home_page.dart';
 
@@ -129,17 +130,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         obscureText: !_showPassword,
                         autocorrect: false,
                         textInputAction: TextInputAction.go,
-                        validator: FormBuilderValidators.compose(
-                          [
-                            FormBuilderValidators.required(
-                              errorText: "Konfirmasi passwordnya isi dulu ya.",
-                            ),
-                            FormBuilderValidators.equal(
-                              _passwordController.text,
-                              errorText: "Passwordnya gak sama.",
-                            ),
-                          ],
-                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Konfirmasi password dulu dong.';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Passwordnya enggak sama nih.';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
                           labelText: 'Konfirmasi Password',
                           icon: const Icon(Icons.lock_rounded),
@@ -171,6 +170,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             }
 
                             try {
+                              context.loaderOverlay.show();
                               final cred = await FirebaseAuth.instance
                                   .createUserWithEmailAndPassword(
                                       email: _emailController.text,
@@ -192,14 +192,41 @@ class _SignUpPageState extends State<SignUpPage> {
                                   builder: (context) => const HomePage(),
                                 ),
                               );
+                            } on FirebaseAuthException catch (e, stackTrace) {
+                              log(e.toString(),
+                                  error: e, stackTrace: stackTrace);
+                              if (e.code == 'invalid-email') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Emailnya enggak valid."),
+                                  ),
+                                );
+                                return;
+                              } else if (e.code == 'email-already-in-use') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        "Emailnya sudah dipake, coba yang lain."),
+                                  ),
+                                );
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message!),
+                                ),
+                              );
                             } catch (e, stackTrace) {
                               log(e.toString(),
                                   error: e, stackTrace: stackTrace);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Emailnya udah pernah dipake"),
+                                  content: Text(
+                                      "Gagal membuat akun. Silakan coba lagi."),
                                 ),
                               );
+                            } finally {
+                              context.loaderOverlay.hide();
                             }
                           },
                           child: const Text('Buat Akun'),

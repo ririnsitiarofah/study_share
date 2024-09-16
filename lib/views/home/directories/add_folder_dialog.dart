@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:studyshare/views/core/utils/colors.dart';
 
 class AddFolderDialog extends StatefulWidget {
@@ -68,7 +69,7 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
         ),
         actions: [
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               try {
                 if (!_formKey.currentState!.validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -79,9 +80,11 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                   return;
                 }
 
+                context.loaderOverlay.show();
+
                 // EDIT FOLDER
                 if (widget.existingFolderId != null) {
-                  FirebaseFirestore.instance
+                  await FirebaseFirestore.instance
                       .collection('direktori')
                       .doc(widget.existingFolderId)
                       .update(
@@ -101,7 +104,7 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                 // BUAT FOLDER
 
                 final user = FirebaseAuth.instance.currentUser!;
-                FirebaseFirestore.instance.collection('direktori').add(
+                await FirebaseFirestore.instance.collection('direktori').add(
                   {
                     'id_parent': widget.idParent,
                     'id_pemilik': user.uid,
@@ -125,6 +128,8 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                     content: Text("Gagal menyimpan folder"),
                   ),
                 );
+              } finally {
+                context.loaderOverlay.hide();
               }
             },
             style: ElevatedButton.styleFrom(
@@ -141,6 +146,53 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.idKelas != null)
+              Card.filled(
+                margin: EdgeInsets.zero,
+                color: colorScheme.secondaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.groups,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Folder ini bakal dibagiin ke semua anggota kelas',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Card.filled(
+                margin: EdgeInsets.zero,
+                color: colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.verified_user,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Folder ini bakal bisa diakses sama kamu aja',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
